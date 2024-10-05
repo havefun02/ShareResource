@@ -1,0 +1,5 @@
+C:\Users\LAP PHAN\source\repos\ShareResource\ShareResource\obj\Debug\net8.0\ShareResource.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\LAP PHAN\source\repos\ShareResource\ShareResource\obj\Debug\net8.0\ShareResource.AssemblyInfoInputs.cache
+C:\Users\LAP PHAN\source\repos\ShareResource\ShareResource\obj\Debug\net8.0\ShareResource.AssemblyInfo.cs
+C:\Users\LAP PHAN\source\repos\ShareResource\ShareResource\obj\Debug\net8.0\ShareResource.csproj.CoreCompileInputs.cache
+C:\Users\LAP PHAN\source\repos\ShareResource\ShareResource\obj\Debug\net8.0\ShareResource.MvcApplicationPartsAssemblyInfo.cache
