@@ -1,4 +1,5 @@
 using ShareResource;
+using Serilog;
 public class Program
 {
     public static void Main(string[] args)
@@ -14,5 +15,5 @@ public class Program
     public static IHostBuilder CreateBuilde(string[] args) =>
         Host.CreateDefaultBuilder(args)
         .UseSerilog()
-        .ConfigureWebHostDefaults(webBuilders => webBuilders.UseStartup<Startup>());
+        .ConfigureWebHostDefaults(webBuilders => { webBuilders.UseStartup<Startup>(); });
 }

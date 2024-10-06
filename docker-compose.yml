@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+  db:
+    container_name: mysql-container
+    image: mysql:8.3
+    platform: linux/x86_64
+    restart: unless-stopped
+    ports:
+      - 3306:3306
+    environment:
+      # MYSQL_ALLOW_EMPTY_PASSWORD: 1
+      # MYSQL_DATABASE: ${DATABASE_NAME}
+      MYSQL_ROOT_PASSWORD: lapphan
+    command: mysqld --default-authentication-plugin=caching_sha2_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysqldb:/var/lib/mysql
+      - C:/Users/LAP PHAN/source/repos/ShareResource/ShareResource/Database/Init.sql:/docker-entrypoint-initdb.d/Init.sql
+
+    # image: mysql:8.0
+    # ports:
+    #   - "${DATABASE_PORT}:3306"
+    # # volumes:
+    # #   - ${MYSQL_DB_PATH}:/var/lib/mysql
+    # #   - ${MYSQL_INIT_DB}:/docker-entrypoint-initdb.d/dump.sql
+    # environment:
+    #   MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+    # command: ["--log_bin_trust_function_creators=1", "--default-authentication-plugin=mysql_native_password"]
+
+    # container_name: postgres-container
+    # image: postgres
+    # restart: always
+    # # set shared memory limit when using docker-compose
+    # shm_size: 128mb
+    # ports:
+    #   - ${DATABASE_PORT}:5432
+
+    # environment:
+    #   POSTGRES_USER: ${DATABASE_USERNAME}
+    #   POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    #   PGDATA: /data/postgres
+
+    # # volumes:
+    # #    - postgres:/data/postgres
+
+  # adminer:
+  #   image: adminer
+  #   restart: always
+  #   ports:
+  #     - 8080:8080
+
+volumes:
+  mysqldb:

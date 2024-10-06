@@ -1,0 +1,19 @@
+{
+  "Version": 1,
+  "Hash": "+acXv8YGW/POTNp5zz3erhZ00mMPb998jomhI1mHoYE=",
+  "Source": "ShareResource",
+  "BasePath": "_content/ShareResource",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "ShareResource\\wwwroot",
+      "Source": "ShareResource",
+      "ContentRoot": "C:\\Users\\LAP PHAN\\source\\repos\\ShareResource\\ShareResource\\wwwroot\\",
+      "BasePath": "_content/ShareResource",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": []
+}
