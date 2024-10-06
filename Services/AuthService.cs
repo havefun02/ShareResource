@@ -48,10 +48,7 @@ namespace ShareResource.Services
             return token;
         }
 
-        Task IAuthService<User, Token>.ChangePassword(ChangePasswordDto dto)
-        {
-            throw new NotImplementedException();
-        }
+        
 
         public async Task<(string, string)> Login(LoginDto dto)
         {
