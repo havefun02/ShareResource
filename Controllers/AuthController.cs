@@ -10,7 +10,7 @@ using System.Security.Claims;
 namespace ShareResource.Controllers
 {
     [ApiController]
-    [Route("auth")]
+    [Route("api/v1/auths")]
     public class AuthController:ControllerBase
     {
 

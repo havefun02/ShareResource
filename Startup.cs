@@ -29,6 +29,8 @@ namespace ShareResource
             services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
             services.AddSingleton<RouteManager>();
             services.AddAutoMapper(typeof(Mapper).Assembly);
+            services.AddScoped<IUserService<User>, UserService>();
+            services.AddScoped<IAdminService<User>, UserService>();
 
             services.AddScoped<IAuthService<User, Token>, AuthService>();
             services.AddSingleton<IJwtService<User>,JwtService>();
