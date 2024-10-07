@@ -9,8 +9,9 @@ using CRUDFramework.Interfaces;
 using ShareResource.Policies;
 using ShareResource.Interfaces;
 using ShareResource.Services;
-
-
+using ShareResource.Models.Entities;
+using ShareResource.Middlewares;
+using ShareResource.Models;
 namespace ShareResource
 {
     public class Startup
@@ -25,9 +26,12 @@ namespace ShareResource
         {
 
             services.AddDbContext<AppDbContext>();
-            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-            services.AddScoped(typeof(IAuthService<,>), typeof(AuthService));
-            services.AddSingleton(typeof(IJwtService<>), typeof(JwtService));
+            services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
+            services.AddSingleton<RouteManager>();
+            services.AddAutoMapper(typeof(Mapper).Assembly);
+
+            services.AddScoped<IAuthService<User, Token>, AuthService>();
+            services.AddSingleton<IJwtService<User>,JwtService>();
 
 
             services.AddCors(options =>
@@ -39,7 +43,9 @@ namespace ShareResource
                           .AllowAnyMethod();
                 });
             });
-            services.AddAuthentication("JWT-COOKIES-SCHEME").AddScheme<AuthenticationSchemeOptions, AppAuthenticationHandler>("JWT-COOKIES-SCHEME", options => { });
+            services.AddAuthentication("JWT-COOKIES-SCHEME").AddScheme<AuthenticationSchemeOptions, AppAuthenticationHandler>("JWT-COOKIES-SCHEME", options => {
+              
+            });
             services.AddAuthorization(options =>
             {
 
@@ -55,17 +61,21 @@ namespace ShareResource
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-                });
+                
             }
-            
+            app.UseSwagger();
+
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+                c.RoutePrefix = string.Empty;
+            });
 
             app.UseCors("AllowAll");
             app.UseRouting();
+            app.UseMiddleware<LoggerMiddleware>();
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseDefaultFiles();
             app.UseStaticFiles();
             app.UseStatusCodePages(async context =>
@@ -82,6 +92,7 @@ namespace ShareResource
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapControllers();
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller}/{action}/{id?}");

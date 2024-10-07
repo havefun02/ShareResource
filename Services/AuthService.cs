@@ -5,16 +5,17 @@ using ShareResource.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using ShareResource.Models.Dtos;
 using Microsoft.AspNetCore.Identity;
+using ShareResource.Database;
 
 namespace ShareResource.Services
 {
     public class AuthService : IAuthService<User, Token>
     {
-        private readonly IRepository<User> _userRepository;
-        private readonly IRepository<Token> _tokenRepository;
+        private readonly IRepository<User,AppDbContext> _userRepository;
+        private readonly IRepository<Token, AppDbContext> _tokenRepository;
         private readonly IJwtService<User> _jwtService;
 
-        public AuthService(IRepository<User> userRepository, IRepository<Token> tokenRepository, IJwtService<User> jwtService)
+        public AuthService(IRepository<User, AppDbContext> userRepository, IRepository<Token, AppDbContext> tokenRepository, IJwtService<User> jwtService)
         {
             _userRepository = userRepository;
             _tokenRepository = tokenRepository;
@@ -64,7 +65,7 @@ namespace ShareResource.Services
             }
 
             var passwordHasher = new PasswordHasher<User>();
-            var result = passwordHasher.VerifyHashedPassword(user, user.Password!, dto.Password);
+            var result = passwordHasher.VerifyHashedPassword(user, user.UserPassword!, dto.Password);
 
             if (result == PasswordVerificationResult.Failed)
             {
@@ -81,6 +82,10 @@ namespace ShareResource.Services
                     userToken.RefreshToken = refreshToken.token!;
                     userToken.ExpiredAt = refreshToken.expiredAt;
                     await _tokenRepository.Update(userToken);
+                }
+                else
+                {
+                    await _tokenRepository.CreateAsync(new Token { RefreshToken=refreshToken.token,ExpiredAt=refreshToken.expiredAt,UserId=user.UserId});
                 }
             }
             catch (Exception ex) {
@@ -105,8 +110,6 @@ namespace ShareResource.Services
         public async Task<User> Register(RegisterDto user)
         {
             var userContext = _userRepository.GetDbSet();
-            var tokenContext = _tokenRepository.GetDbSet();
-
             var existingUser = await userContext.SingleOrDefaultAsync(u=>u.UserEmail==user.Email);
             if (existingUser != null)
             {
@@ -115,17 +118,19 @@ namespace ShareResource.Services
 
             var newUser = new User
             {
+                UserId=Guid.NewGuid().ToString(),
                 UserName = user.UserName,
                 UserEmail = user.Email,
                 UserPhone = user.UserPhone,
-                UserRoleId = "Admin"
+                UserRoleId = "Guest"
             };
 
             var passwordHasher = new PasswordHasher<User>();
-            newUser.Password = passwordHasher.HashPassword(newUser, user.Password);
+            newUser.UserPassword = passwordHasher.HashPassword(newUser, user.Password);
 
-            var res=await _userRepository.CreateAsync(newUser);
-            return res;
+            var userCreated=await _userRepository.CreateAsync(newUser);
+            var res = await userContext.Include(u => u.UserRole).ThenInclude(r => r!.RolePermissions).SingleOrDefaultAsync(u => u.UserId == userCreated.UserId);
+            return res!;
         }
 
         public async Task UpdatePassword(UpdatePasswordDto dto,string userId)
@@ -137,7 +142,7 @@ namespace ShareResource.Services
             }
 
             var passwordHasher = new PasswordHasher<User>();
-            user.Password = passwordHasher.HashPassword(user, dto.NewPassword);
+            user.UserPassword = passwordHasher.HashPassword(user, dto.NewPassword);
             await _userRepository.Update(user);
         }
         public async Task ChangePassword(ChangePasswordDto dto)
@@ -150,14 +155,14 @@ namespace ShareResource.Services
             }
 
             var passwordHasher = new PasswordHasher<User>();
-            var result = passwordHasher.VerifyHashedPassword(user, user.Password!, dto.CurrentPassword);
+            var result = passwordHasher.VerifyHashedPassword(user, user.UserPassword!, dto.CurrentPassword);
 
             if (result == PasswordVerificationResult.Failed)
             {
                 throw new ArgumentException("Current password is incorrect.");
             }
 
-            user.Password = passwordHasher.HashPassword(user, dto.NewPassword);
+            user.UserPassword = passwordHasher.HashPassword(user, dto.NewPassword);
             await _userRepository.Update(user);
         }
 

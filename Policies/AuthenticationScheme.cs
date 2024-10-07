@@ -54,6 +54,7 @@ namespace ShareResource.Policies
                     });
 
                     var newRefreshToken = await _authService.UpdateTokenAsync(tokenInfo);
+
                     if (!string.IsNullOrEmpty(newRefreshToken.RefreshToken))
                     {
                         Context.Response.Cookies.Append("refreshToken", newRefreshToken.RefreshToken, new CookieOptions

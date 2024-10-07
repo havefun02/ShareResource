@@ -2,6 +2,7 @@
 {
     public class Token
     {
+        public int TokenId { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime ExpiredAt {  get; set; }
         public bool IsRevoked { get; set; }

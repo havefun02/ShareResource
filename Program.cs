@@ -9,10 +9,11 @@ public class Program
             .AddJsonFile("appsettings.json")
             .Build())
             .CreateLogger();
-        var builder = WebApplication.CreateBuilder(args).Build();
+        var builder = CreateBuilder(args).Build();
+
         builder.Run();
     }
-    public static IHostBuilder CreateBuilde(string[] args) =>
+    public static IHostBuilder CreateBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
         .UseSerilog()
         .ConfigureWebHostDefaults(webBuilders => { webBuilders.UseStartup<Startup>(); });

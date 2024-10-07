@@ -18,7 +18,7 @@
           }
         }
       },
-      "CRUDFramework/1.0.1": {
+      "CRUDFramework/1.0.3": {
         "type": "package",
         "dependencies": {
           "Microsoft.EntityFrameworkCore": "8.0.0"
@@ -1335,13 +1335,13 @@
         "lib/net6.0/AutoMapper.xml"
       ]
     },
-    "CRUDFramework/1.0.1": {
-      "sha512": "o1j0egR5RY5+I0eQ6DsZdp3E1z9rr4Fi316Xdnr1MXrxQQXLlHClQtB91Zpi6Oa2WQgfhgXP0HxR81DPRWCENA==",
+    "CRUDFramework/1.0.3": {
+      "sha512": "dG4Lt7kGS+QAHzzX1BSDnku62dGcpbE7A4Peey5++UBpIEh5wjwYMkL/ppPofMDI/bLZwlTA4hWLujUFS1P/sA==",
       "type": "package",
-      "path": "crudframework/1.0.1",
+      "path": "crudframework/1.0.3",
       "files": [
         ".nupkg.metadata",
-        "crudframework.1.0.1.nupkg.sha512",
+        "crudframework.1.0.3.nupkg.sha512",
         "crudframework.nuspec",
         "lib/net8.0/CRUDFramework.dll",
         "lib/net8.0/CRUDFramework.runtimeconfig.json"
@@ -3583,7 +3583,7 @@
   "projectFileDependencyGroups": {
     "net8.0": [
       "AutoMapper >= 13.0.1",
-      "CRUDFramework >= 1.0.1",
+      "CRUDFramework >= 1.0.3",
       "Microsoft.EntityFrameworkCore >= 8.0.0",
       "Microsoft.EntityFrameworkCore.Design >= 8.0.0",
       "Microsoft.IdentityModel.Tokens >= 8.0.0",
@@ -3645,7 +3645,7 @@
           },
           "CRUDFramework": {
             "target": "Package",
-            "version": "[1.0.1, )"
+            "version": "[1.0.3, )"
           },
           "Microsoft.EntityFrameworkCore": {
             "target": "Package",

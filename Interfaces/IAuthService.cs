@@ -5,7 +5,7 @@ using ShareResource.Models.Dtos;
 
 namespace ShareResource.Interfaces
 {
-    public interface IAuthService<Entity,Token>
+    public interface IAuthService<Entity,Token> 
     {
         public Task<Token> UpdateTokenAsync(Token token);
         public Task<Token> GetTokenInfoAsync(string token);

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShareResource.Interfaces;
 using ShareResource.Models.Dtos;
@@ -14,7 +15,10 @@ namespace ShareResource.Controllers
     {
 
         private readonly IAuthService<User,Token> _authService;
-        public AuthController(IAuthService<User, Token> authService) {
+        private readonly IMapper _mapper;
+
+        public AuthController(IAuthService<User, Token> authService,IMapper mapper) {
+            _mapper = mapper;
             _authService = authService;
         }
 
@@ -30,7 +34,7 @@ namespace ShareResource.Controllers
                     Secure = true,
                     SameSite = SameSiteMode.Strict,
                 });
-                HttpContext.Response.Cookies.Append("refreshToken", access, new CookieOptions
+                HttpContext.Response.Cookies.Append("refreshToken", refresh, new CookieOptions
                 {
                     HttpOnly = true,
                     Secure = true,
@@ -43,13 +47,14 @@ namespace ShareResource.Controllers
             }
         }
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
+        public async Task<ActionResult<RegisterResultDto>> Register([FromBody] RegisterDto registerDto)
         {
 
             try
             {
                 var registerResult=await this._authService.Register(registerDto);
-                return Ok(registerResult);
+                var returnResult=_mapper.Map<RegisterResultDto>(registerResult);
+                return Ok(returnResult);
 
             }
             catch (Exception ex)
@@ -102,6 +107,8 @@ namespace ShareResource.Controllers
                     return NotFound("User ID not found in claims.");
                 }
                 await this._authService.Logout(userId);
+                HttpContext.Response.Cookies.Delete("accessToken");
+                HttpContext.Response.Cookies.Delete("refreshToken");
                 return Ok();
             }
             catch(Exception ex) { 
