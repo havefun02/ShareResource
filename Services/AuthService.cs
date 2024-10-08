@@ -25,7 +25,6 @@ namespace ShareResource.Services
         public async Task<Token> GetTokenInfoAsync(string token)
         {
             var dbSet = _tokenRepository.GetDbSet();
-
             var tokenResult = await dbSet.Include(t => t.User)
                                           .SingleOrDefaultAsync(t => t.RefreshToken == token);
             if (tokenResult == null)
@@ -45,8 +44,8 @@ namespace ShareResource.Services
             token.RefreshToken = tokenResult.token;
             token.ExpiredAt = tokenResult.expiredAt;
             token.IsRevoked = false;
-            await _tokenRepository.Update(token);
-            return token;
+            var updatedToken =await _tokenRepository.Update(token);
+            return updatedToken;
         }
 
         
@@ -76,6 +75,7 @@ namespace ShareResource.Services
             var refreshToken = _jwtService.RefreshToken();
             try
             {
+                Console.WriteLine(refreshToken.token);
                 var userToken = await tokenContext.SingleOrDefaultAsync(t => t.UserId == user.UserId);
                 if (userToken != null)
                 {

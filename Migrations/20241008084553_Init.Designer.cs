@@ -11,7 +11,7 @@ using ShareResource.Database;
 namespace ShareResource.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241007064145_Init")]
+    [Migration("20241008084553_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -114,8 +114,9 @@ namespace ShareResource.Migrations
 
             modelBuilder.Entity("ShareResource.Models.Entities.Token", b =>
                 {
-                    b.Property<string>("RefreshToken")
-                        .HasColumnType("varchar(255)");
+                    b.Property<int>("TokenId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("ExpiredAt")
                         .HasColumnType("datetime(6)");
@@ -125,10 +126,13 @@ namespace ShareResource.Migrations
                         .HasColumnType("tinyint(1)")
                         .HasDefaultValue(false);
 
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("UserId")
                         .HasColumnType("varchar(255)");
 
-                    b.HasKey("RefreshToken");
+                    b.HasKey("TokenId");
 
                     b.HasIndex("UserId")
                         .IsUnique();
@@ -170,10 +174,10 @@ namespace ShareResource.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = "20fb3813-49b3-414c-b8fe-f46fa42ef6b8",
+                            UserId = "b42b1327-3b2e-4584-b99b-ad7662ac0fe2",
                             UserEmail = "Admin@gmail.com",
                             UserName = "Lapphan",
-                            UserPassword = "AQAAAAIAAYagAAAAEDvg9guHEtguBcvTzrKdahy0knANcGHxEPaYuvfZHIT8fnLTyqIVCwqomDJudc29wg==",
+                            UserPassword = "AQAAAAIAAYagAAAAENOYkz9xEvjuv+6BDnPBcJxnW1Wi1hZyrJ+O8zdXXqpY0h1iAn3Ur+omOlIaNwL0Rw==",
                             UserPhone = "123456789",
                             UserRoleId = "Admin"
                         });
@@ -202,7 +206,8 @@ namespace ShareResource.Migrations
                 {
                     b.HasOne("ShareResource.Models.Entities.User", "User")
                         .WithOne("UserToken")
-                        .HasForeignKey("ShareResource.Models.Entities.Token", "UserId");
+                        .HasForeignKey("ShareResource.Models.Entities.Token", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("User");
                 });
