@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ShareResource.Models.Dtos
 {
-    public class RegisterResultDto
+    public class UserResultDto
     {
         public string UserName { get; set; } = string.Empty; // Username of the user
         public string UserEmail { get; set; } = string.Empty; // Email of the user

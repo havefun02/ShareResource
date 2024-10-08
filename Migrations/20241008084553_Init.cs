@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -108,7 +109,9 @@ namespace ShareResource.Migrations
                 name: "Tokens",
                 columns: table => new
                 {
-                    RefreshToken = table.Column<string>(type: "varchar(255)", nullable: false)
+                    TokenId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    RefreshToken = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     ExpiredAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     IsRevoked = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
@@ -117,12 +120,13 @@ namespace ShareResource.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Tokens", x => x.RefreshToken);
+                    table.PrimaryKey("PK_Tokens", x => x.TokenId);
                     table.ForeignKey(
                         name: "FK_Tokens_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
-                        principalColumn: "UserId");
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -157,7 +161,7 @@ namespace ShareResource.Migrations
             migrationBuilder.InsertData(
                 table: "Users",
                 columns: new[] { "UserId", "UserEmail", "UserName", "UserPassword", "UserPhone", "UserRoleId" },
-                values: new object[] { "20fb3813-49b3-414c-b8fe-f46fa42ef6b8", "Admin@gmail.com", "Lapphan", "AQAAAAIAAYagAAAAEDvg9guHEtguBcvTzrKdahy0knANcGHxEPaYuvfZHIT8fnLTyqIVCwqomDJudc29wg==", "123456789", "Admin" });
+                values: new object[] { "b42b1327-3b2e-4584-b99b-ad7662ac0fe2", "Admin@gmail.com", "Lapphan", "AQAAAAIAAYagAAAAENOYkz9xEvjuv+6BDnPBcJxnW1Wi1hZyrJ+O8zdXXqpY0h1iAn3Ur+omOlIaNwL0Rw==", "123456789", "Admin" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_RolePermissions_PermissionId",

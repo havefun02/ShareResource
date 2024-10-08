@@ -171,10 +171,10 @@ namespace ShareResource.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = "061c9d9c-3683-404a-b6c7-447d0cecb855",
+                            UserId = "b42b1327-3b2e-4584-b99b-ad7662ac0fe2",
                             UserEmail = "Admin@gmail.com",
                             UserName = "Lapphan",
-                            UserPassword = "AQAAAAIAAYagAAAAEKI4WsfroN4uvTKpN/CfGXXx8h2xMbnOXaNMDUIY0FEdQFq8w7DY1nLi9iVuhP/J1A==",
+                            UserPassword = "AQAAAAIAAYagAAAAENOYkz9xEvjuv+6BDnPBcJxnW1Wi1hZyrJ+O8zdXXqpY0h1iAn3Ur+omOlIaNwL0Rw==",
                             UserPhone = "123456789",
                             UserRoleId = "Admin"
                         });
@@ -203,7 +203,8 @@ namespace ShareResource.Migrations
                 {
                     b.HasOne("ShareResource.Models.Entities.User", "User")
                         .WithOne("UserToken")
-                        .HasForeignKey("ShareResource.Models.Entities.Token", "UserId");
+                        .HasForeignKey("ShareResource.Models.Entities.Token", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("User");
                 });

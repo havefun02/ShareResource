@@ -39,7 +39,7 @@ namespace ShareResource.Policies
             try
             {
                 var tokenInfo = await _authService.GetTokenInfoAsync(refreshToken);
-                if (tokenInfo == null || tokenInfo.IsRevoked || tokenInfo.ExpiredAt < DateTime.UtcNow)
+                if (tokenInfo == null ||tokenInfo.ExpiredAt < DateTime.UtcNow)
                 {
                     return AuthenticateResult.Fail("Invalid refresh token");
                 }
@@ -47,6 +47,7 @@ namespace ShareResource.Policies
                 var newAccessToken = _jwtService.GenerateToken(tokenInfo.User!);
                 if (!string.IsNullOrEmpty(newAccessToken))
                 {
+                    Context.Response.Cookies.Delete("accessToken");
                     Context.Response.Cookies.Append("accessToken", newAccessToken, new CookieOptions
                     {
                         HttpOnly = true,
@@ -54,24 +55,22 @@ namespace ShareResource.Policies
                     });
 
                     var newRefreshToken = await _authService.UpdateTokenAsync(tokenInfo);
-
-                    if (!string.IsNullOrEmpty(newRefreshToken.RefreshToken))
+                    Console.WriteLine($"{newRefreshToken.RefreshToken}");
+                    Context.Response.Cookies.Delete("refreshToken");
+                    Context.Response.Cookies.Append("refreshToken", newRefreshToken.RefreshToken!, new CookieOptions
                     {
-                        Context.Response.Cookies.Append("refreshToken", newRefreshToken.RefreshToken, new CookieOptions
-                        {
-                            HttpOnly = true,
-                            SameSite = SameSiteMode.Strict,
-                        });
-                    }
+                        HttpOnly = true,
+                        SameSite = SameSiteMode.Strict,
+                    });
                     var principal = _jwtService.ValidateToken(newAccessToken);
                     var ticket = new AuthenticationTicket(principal, "JWT-COOKIES-SCHEME");
                     return AuthenticateResult.Success(ticket);
                 }
                 return AuthenticateResult.Fail("Failed to generate new access token");
             }
-            catch (ArgumentException)
+            catch (ArgumentException ex)
             {
-                return AuthenticateResult.Fail("User not found");
+                return AuthenticateResult.Fail("User not found with error " +ex.Message);
             }
             catch (Exception ex)
             {

@@ -47,13 +47,13 @@ namespace ShareResource.Controllers
             }
         }
         [HttpPost("register")]
-        public async Task<ActionResult<RegisterResultDto>> Register([FromBody] RegisterDto registerDto)
+        public async Task<ActionResult<UserResultDto>> Register([FromBody] RegisterDto registerDto)
         {
 
             try
             {
                 var registerResult=await this._authService.Register(registerDto);
-                var returnResult=_mapper.Map<RegisterResultDto>(registerResult);
+                var returnResult=_mapper.Map<UserResultDto>(registerResult);
                 return Ok(returnResult);
 
             }

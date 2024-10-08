@@ -12,6 +12,7 @@ using ShareResource.Services;
 using ShareResource.Models.Entities;
 using ShareResource.Middlewares;
 using ShareResource.Models;
+using AutoMapper;
 namespace ShareResource
 {
     public class Startup
@@ -28,10 +29,17 @@ namespace ShareResource
             services.AddDbContext<AppDbContext>();
             services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
             services.AddSingleton<RouteManager>();
-            services.AddAutoMapper(typeof(Mapper).Assembly);
+            services.AddSingleton<IMapper>(provider =>
+            {
+                var configuration = new MapperConfiguration(cfg =>
+                {
+                    cfg.AddProfile<Mapping>();
+                });
+                return configuration.CreateMapper();
+            });
             services.AddScoped<IUserService<User>, UserService>();
             services.AddScoped<IAdminService<User>, UserService>();
-
+            services.AddScoped<IRoleService<Role>, RoleService>();
             services.AddScoped<IAuthService<User, Token>, AuthService>();
             services.AddSingleton<IJwtService<User>,JwtService>();
 
@@ -45,15 +53,9 @@ namespace ShareResource
                           .AllowAnyMethod();
                 });
             });
-            services.AddAuthentication("JWT-COOKIES-SCHEME").AddScheme<AuthenticationSchemeOptions, AppAuthenticationHandler>("JWT-COOKIES-SCHEME", options => {
-              
-            });
-            services.AddAuthorization(options =>
-            {
-
-            });
+            services.AddAuthentication("JWT-COOKIES-SCHEME").AddScheme<AuthenticationSchemeOptions, AppAuthenticationHandler>("JWT-COOKIES-SCHEME", null);
+            services.AddAuthorization();
             services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo { Title = "DEVELOPMENT API", Version = "v1" }); });
-
             services.AddControllersWithViews();
         }
 

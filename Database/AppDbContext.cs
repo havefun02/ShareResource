@@ -66,6 +66,10 @@ namespace ShareResource.Database
                     .WithMany(r=>r.RoleUsers) 
                     .HasForeignKey(u => u.UserRoleId) // Foreign key for UserRole
                     .OnDelete(DeleteBehavior.Restrict); // Configure delete behavior
+                entity.HasOne(u => u.UserToken)
+                    .WithOne(t=>t.User)
+                    .HasForeignKey<Token>(t=>t.UserId) 
+                    .OnDelete(DeleteBehavior.Cascade); // Configure delete behavior
                 entity.HasOne(u => u.UserToken).WithOne(t => t.User).HasForeignKey<Token>(t => t.UserId);
                 var user = new User
                 {
@@ -107,7 +111,6 @@ namespace ShareResource.Database
             modelBuilder.Entity<Token>(entity =>
             {
                 entity.HasKey(t=> t.TokenId);
-
                 entity.Property(t=>t.IsRevoked).HasDefaultValue(false);
             });
             var permisisons = new List<Permission>();

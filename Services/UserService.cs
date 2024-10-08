@@ -7,6 +7,7 @@ using ShareResource.Models.Entities;
 using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 
 namespace ShareResource.Services
 {
@@ -34,14 +35,17 @@ namespace ShareResource.Services
         /// <returns>The updated User entity.</returns>
         /// <exception cref="ArgumentNullException">Thrown when userDto is null.</exception>
         /// <exception cref="ArgumentException">Thrown when user not found during update.</exception>
-        public async Task<User> EditProfile(UserDto userDto)
+        public async Task<User> EditProfile(UserDto userDto,string userId)
         {
             if (userDto == null) throw new ArgumentNullException(nameof(userDto));
 
-            var userData = _mapper.Map<User>(userDto);
+            var userData = await this._userRepository.FindOneById(userId);
+            if (userData == null) {
+                throw new InvalidOperationException("User does not exist");
+            }
+            userData.UserName=userDto.UserName;
+            userData.UserPhone = userDto.UserPhone;
             var user = await _userRepository.Update(userData);
-            if (user == null) throw new ArgumentException("User not found during update.");
-
             return user;
         }
 
@@ -72,8 +76,9 @@ namespace ShareResource.Services
         public async Task<User> GetUserProfile(string userId)
         {
             if (string.IsNullOrWhiteSpace(userId)) throw new ArgumentNullException(nameof(userId));
+            var userContext = this._userRepository.GetDbSet();
 
-            var user = await _userRepository.FindOneById(userId);
+            var user = await userContext.Include(u => u.UserRole!).ThenInclude(r => r.RolePermissions!).SingleOrDefaultAsync(u=>u.UserId==userId);
             if (user == null)
             {
                 throw new ArgumentException("User not found.");
@@ -88,15 +93,21 @@ namespace ShareResource.Services
         /// <param name="updateUserRoleDto">The DTO containing user ID and role ID.</param>
         /// <exception cref="ArgumentNullException">Thrown when updateUserRoleDto is null.</exception>
         /// <exception cref="ArgumentException">Thrown when user does not exist.</exception>
-        public async Task UpdateUserRole(UpdateUserRoleDto updateUserRoleDto)
+        public async Task UpdateUserRole(UpdateUserRoleDto updateUserRoleDto,string adminId,string userId)
         {
-            if (updateUserRoleDto == null) throw new ArgumentNullException(nameof(updateUserRoleDto));
+            try
+            {
+                if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(adminId)) throw new ArgumentNullException();
 
-            var user = await _userRepository.FindOneById(updateUserRoleDto.UserId);
-            if (user == null) throw new ArgumentException("User does not exist");
+                var admin = await _userRepository.FindOneById(adminId);
+                if (admin == null) throw new ArgumentException("admin does not exist");
+                var user = await _userRepository.FindOneById(userId);
+                if (user == null) throw new ArgumentException("user does not exist");
 
-            user.UserRoleId = updateUserRoleDto.RoleId;
-            await _userRepository.Update(user);
+                user.UserRoleId = updateUserRoleDto.RoleId;
+                await _userRepository.Update(user);
+            }
+            catch { throw; }
         }
 
         /// <summary>
@@ -106,12 +117,14 @@ namespace ShareResource.Services
         /// <exception cref="ArgumentNullException">Thrown when userId is null or empty.</exception>
         /// <exception cref="ArgumentException">Thrown when user does not exist.</exception>
         /// <exception cref="InvalidOperationException">Thrown when user could not be deleted.</exception>
-        public async Task DeleteUserAccount(string userId)
+        public async Task DeleteUserAccount(string adminId,string userId)
         {
-            if (string.IsNullOrWhiteSpace(userId)) throw new ArgumentNullException(nameof(userId));
+            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(adminId)) throw new ArgumentNullException();
 
+            var admin = await _userRepository.FindOneById(adminId);
+            if (admin == null) throw new ArgumentException("admin does not exist");
             var user = await _userRepository.FindOneById(userId);
-            if (user == null) throw new ArgumentException("User does not exist");
+            if (user == null) throw new ArgumentException("user does not exist");
 
             var status = await _userRepository.Delete(user);
             if (status == 0)
