@@ -25,27 +25,35 @@ namespace ShareResource.Services
         public async Task<Token> GetTokenInfoAsync(string token)
         {
             var dbSet = _tokenRepository.GetDbSet();
-            var tokenResult = await dbSet.Include(t => t.User)
-                                          .SingleOrDefaultAsync(t => t.RefreshToken == token);
-            if (tokenResult == null)
+            try
             {
-                throw new ArgumentException("Token not found.");
+                var tokenResult = await dbSet.Include(t => t.User)
+                                              .SingleOrDefaultAsync(t => t.RefreshToken == token);
+                if (tokenResult == null) {
+                    throw new NullReferenceException("Can not find the token");
+                }
+                return tokenResult;
             }
-            return tokenResult;
+            catch { throw; }
         }
 
         public async Task<Token> UpdateTokenAsync(Token token)
         {
-            var tokenResult = _jwtService.RefreshToken();
-            if (tokenResult == null)
+            try
             {
-                throw new ArgumentException("Failed to generate a new token.");
+                var tokenResult = _jwtService.RefreshToken();
+                token.RefreshToken = tokenResult.token;
+                token.ExpiredAt = tokenResult.expiredAt;
+                token.IsRevoked = false;
+                var updatedToken = await _tokenRepository.Update(token);
+                if (updatedToken == null) {
+                    throw new NullReferenceException("Can not update token");
+                }
+                return updatedToken;
             }
-            token.RefreshToken = tokenResult.token;
-            token.ExpiredAt = tokenResult.expiredAt;
-            token.IsRevoked = false;
-            var updatedToken =await _tokenRepository.Update(token);
-            return updatedToken;
+            catch {
+                throw;
+            }
         }
 
         
@@ -75,7 +83,6 @@ namespace ShareResource.Services
             var refreshToken = _jwtService.RefreshToken();
             try
             {
-                Console.WriteLine(refreshToken.token);
                 var userToken = await tokenContext.SingleOrDefaultAsync(t => t.UserId == user.UserId);
                 if (userToken != null)
                 {
@@ -94,46 +101,60 @@ namespace ShareResource.Services
             return (accessToken, refreshToken.token!);
         }
 
-        public async Task Logout(string userId)
+        public async Task<bool> Logout(string userId)
         {
-            var tokenContext = _tokenRepository.GetDbSet();
-            var token= await tokenContext.SingleOrDefaultAsync(t=>t.UserId==userId);
-            if (token == null)
+            try
             {
-                throw new ArgumentException("Invalid user data");
+                var tokenContext = _tokenRepository.GetDbSet();
+                var token = await tokenContext.SingleOrDefaultAsync(t => t.UserId == userId);
+                if (token == null)
+                {
+                    throw new NullReferenceException("Invalid user");
+                }
+                token.IsRevoked = true;
+                var updateResult = await _tokenRepository.Update(token);
+                if (updateResult != null) return true;
+                else throw new InvalidOperationException("Internal server error during logout");
             }
-            token.IsRevoked = true;
-            await _tokenRepository.Update(token);
-
+            catch
+            {
+                throw;
+            }
         }
 
         public async Task<User> Register(RegisterDto user)
         {
-            var userContext = _userRepository.GetDbSet();
-            var existingUser = await userContext.SingleOrDefaultAsync(u=>u.UserEmail==user.Email);
-            if (existingUser != null)
+            try
             {
-                throw new ArgumentException("User with this email already exists.");
+                var userContext = _userRepository.GetDbSet();
+                var existingUser = await userContext.SingleOrDefaultAsync(u => u.UserEmail == user.Email);
+                if (existingUser != null)
+                {
+                    throw new ArgumentException("User with this email already exists.");
+                }
+
+                var newUser = new User
+                {
+                    UserId = Guid.NewGuid().ToString(),
+                    UserName = user.UserName,
+                    UserEmail = user.Email,
+                    UserPhone = user.UserPhone,
+                    UserRoleId = "Guest"
+                };
+
+                var passwordHasher = new PasswordHasher<User>();
+                newUser.UserPassword = passwordHasher.HashPassword(newUser, user.Password);
+
+                var userCreated = await _userRepository.CreateAsync(newUser);
+                if (userCreated == null) throw new InvalidOperationException("Cant not create user");
+                var getDataResult = await userContext.Include(u => u.UserRole).ThenInclude(r => r!.RolePermissions).SingleOrDefaultAsync(u => u.UserId == userCreated.UserId);
+                if (getDataResult == null) throw new InvalidOperationException("Internal error finding user data");
+                return getDataResult;
             }
-
-            var newUser = new User
-            {
-                UserId=Guid.NewGuid().ToString(),
-                UserName = user.UserName,
-                UserEmail = user.Email,
-                UserPhone = user.UserPhone,
-                UserRoleId = "Guest"
-            };
-
-            var passwordHasher = new PasswordHasher<User>();
-            newUser.UserPassword = passwordHasher.HashPassword(newUser, user.Password);
-
-            var userCreated=await _userRepository.CreateAsync(newUser);
-            var res = await userContext.Include(u => u.UserRole).ThenInclude(r => r!.RolePermissions).SingleOrDefaultAsync(u => u.UserId == userCreated.UserId);
-            return res!;
+            catch { throw; }
         }
 
-        public async Task UpdatePassword(UpdatePasswordDto dto,string userId)
+        public async Task<bool> UpdatePassword(UpdatePasswordDto dto,string userId)
         {
             var user = await _userRepository.FindOneById(userId);
             if (user == null)
@@ -143,27 +164,35 @@ namespace ShareResource.Services
 
             var passwordHasher = new PasswordHasher<User>();
             user.UserPassword = passwordHasher.HashPassword(user, dto.NewPassword);
-            await _userRepository.Update(user);
+            var updateResult=await _userRepository.Update(user);
+            if (updateResult == null) throw new InvalidOperationException("Internal error getting user data");
+            return true;
         }
-        public async Task ChangePassword(ChangePasswordDto dto)
+        public async Task<bool> ChangePassword(ChangePasswordDto dto)
         {
-            var userContext = _userRepository.GetDbSet();
-            var user= await userContext.SingleOrDefaultAsync(u=>u.UserEmail == dto.UserEmail);
-            if (user == null)
+            try
             {
-                throw new ArgumentException("User not found.");
+                var userContext = _userRepository.GetDbSet();
+                var user = await userContext.SingleOrDefaultAsync(u => u.UserEmail == dto.UserEmail);
+                if (user == null)
+                {
+                    throw new ArgumentException("User not found.");
+                }
+
+                var passwordHasher = new PasswordHasher<User>();
+                var result = passwordHasher.VerifyHashedPassword(user, user.UserPassword!, dto.CurrentPassword);
+
+                if (result == PasswordVerificationResult.Failed)
+                {
+                    throw new ArgumentException("Current password is incorrect.");
+                }
+
+                user.UserPassword = passwordHasher.HashPassword(user, dto.NewPassword);
+                var updateResult=await _userRepository.Update(user);
+                if (updateResult == null) throw new InvalidOperationException("Internal error while changing password");
+                return true;
             }
-
-            var passwordHasher = new PasswordHasher<User>();
-            var result = passwordHasher.VerifyHashedPassword(user, user.UserPassword!, dto.CurrentPassword);
-
-            if (result == PasswordVerificationResult.Failed)
-            {
-                throw new ArgumentException("Current password is incorrect.");
-            }
-
-            user.UserPassword = passwordHasher.HashPassword(user, dto.NewPassword);
-            await _userRepository.Update(user);
+            catch { throw; }
         }
 
     }

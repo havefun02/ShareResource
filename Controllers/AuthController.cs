@@ -74,8 +74,9 @@ namespace ShareResource.Controllers
                 {
                     return NotFound("User ID not found in claims.");
                 }
-                await this._authService.UpdatePassword(updatePasswordDto, userId);
-                return Ok();
+                var updatePasswordResult =await this._authService.UpdatePassword(updatePasswordDto, userId);
+                if (updatePasswordResult) return Ok();
+                else return BadRequest();
             }
             catch (Exception ex){
                 return BadRequest(ex.Message);
@@ -86,8 +87,9 @@ namespace ShareResource.Controllers
         {
             try
             {
-                await _authService.ChangePassword(changePasswordDto);
-                return Ok();
+                var changePasswordResult=await _authService.ChangePassword(changePasswordDto);
+                if (changePasswordResult) return Ok();
+                else return BadRequest();
             }
             catch (Exception ex)
             {
@@ -106,10 +108,13 @@ namespace ShareResource.Controllers
                 {
                     return NotFound("User ID not found in claims.");
                 }
-                await this._authService.Logout(userId);
-                HttpContext.Response.Cookies.Delete("accessToken");
-                HttpContext.Response.Cookies.Delete("refreshToken");
-                return Ok();
+                var logoutResult = await this._authService.Logout(userId);
+                if (logoutResult) {
+                    HttpContext.Response.Cookies.Delete("accessToken");
+                    HttpContext.Response.Cookies.Delete("refreshToken");
+                    return Ok();
+                }
+                else return BadRequest();
             }
             catch(Exception ex) { 
                 return BadRequest(ex.Message); 

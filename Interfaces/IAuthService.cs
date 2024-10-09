@@ -11,8 +11,8 @@ namespace ShareResource.Interfaces
         public Task<Token> GetTokenInfoAsync(string token);
         public Task<(string,string)> Login(LoginDto user);
         public Task<Entity> Register(RegisterDto user);
-        public Task Logout(string userId);
-        public Task UpdatePassword(UpdatePasswordDto dto, string userId);
-        public Task ChangePassword(ChangePasswordDto dto);
+        public Task<bool> Logout(string userId);
+        public Task<bool> UpdatePassword(UpdatePasswordDto dto, string userId);
+        public Task<bool> ChangePassword(ChangePasswordDto dto);
     }
 }

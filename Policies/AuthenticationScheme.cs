@@ -12,7 +12,6 @@ namespace ShareResource.Policies
     {
         private readonly IJwtService<User> _jwtService;
         private readonly IAuthService<User,Token>  _authService;
-
         private readonly RouteManager _routeManager;
 
         public AppAuthenticationHandler(
