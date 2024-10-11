@@ -1,11 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "i8tptZDCEDc=",
+  "dgSpecHash": "a/aZhz/Dnx8=",
   "success": true,
   "projectFilePath": "C:\\Users\\LAP PHAN\\source\\repos\\ShareResource\\ShareResource\\ShareResource.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\LAP PHAN\\.nuget\\packages\\automapper\\13.0.1\\automapper.13.0.1.nupkg.sha512",
-    "C:\\Users\\LAP PHAN\\.nuget\\packages\\crudframework\\1.0.3\\crudframework.1.0.3.nupkg.sha512",
+    "C:\\Users\\LAP PHAN\\.nuget\\packages\\crudframework\\1.0.0\\crudframework.1.0.0.nupkg.sha512",
     "C:\\Users\\LAP PHAN\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\LAP PHAN\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\6.0.0\\microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",
     "C:\\Users\\LAP PHAN\\.nuget\\packages\\microsoft.codeanalysis.analyzers\\3.3.3\\microsoft.codeanalysis.analyzers.3.3.3.nupkg.sha512",

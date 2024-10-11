@@ -4,9 +4,9 @@ namespace ShareResource.Models.Dtos
 {
     public class UpdateRoleDto
     {
-        public string? RoleName { set; get; }
-        public string? RoleDescription { set; get; }
-        public List<Permission>? RolePermissions { get; set; }
+        public string RoleName { set; get; }=string.Empty;
+        public string RoleDescription { set; get; }=string.Empty ;
+        public List<string>? RolePermissionsId { get; set; }=new List<string>();
 
     }
 }

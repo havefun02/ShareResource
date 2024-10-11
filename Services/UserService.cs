@@ -4,6 +4,7 @@ using ShareResource.Database;
 using ShareResource.Interfaces;
 using ShareResource.Models.Dtos;
 using ShareResource.Models.Entities;
+using ShareResource.Exceptions ;
 using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -37,16 +38,24 @@ namespace ShareResource.Services
         /// <exception cref="ArgumentException">Thrown when user not found during update.</exception>
         public async Task<User> EditProfile(UserDto userDto,string userId)
         {
-            if (userDto == null) throw new ArgumentNullException(nameof(userDto));
+            try
+            {
+                if (userDto == null || string.IsNullOrWhiteSpace(userId)) throw new ArgumentNullException("Invalid data requirement");
+                var userData = await this._userRepository.FindOneById(userId);
+                if (userData == null)
+                {
+                    throw new InvalidOperationException("User does not exist");
+                }
+                userData.UserName = userDto.UserName;
+                userData.UserPhone = userDto.UserPhone;
+                var user = await _userRepository.Update(userData);
+                var userContext = this._userRepository.GetDbSet();
 
-            var userData = await this._userRepository.FindOneById(userId);
-            if (userData == null) {
-                throw new InvalidOperationException("User does not exist");
+                user = await userContext.Include(u => u.UserRole!).ThenInclude(r => r.RolePermissions!).SingleOrDefaultAsync(u => u.UserId == userId);
+                if (user == null) { throw new InvalidOperationException(); }
+                return user;
             }
-            userData.UserName=userDto.UserName;
-            userData.UserPhone = userDto.UserPhone;
-            var user = await _userRepository.Update(userData);
-            return user;
+            catch(Exception ex) { throw new InternalException("Edit profile failed. ", ex); }
         }
 
         /// <summary>
@@ -58,11 +67,22 @@ namespace ShareResource.Services
         public async Task DeleteProfile(string userId)
         {
             if (string.IsNullOrWhiteSpace(userId)) throw new ArgumentNullException(nameof(userId));
-
-            var status = await _userRepository.Delete(userId);
-            if (status == 0)
+            try
             {
-                throw new ArgumentException("User not found or could not be deleted.");
+                var userContext = this._userRepository.GetDbSet();
+                var user = await userContext.Include(u => u.UserRole!).ThenInclude(r => r.RolePermissions!).SingleOrDefaultAsync(u => u.UserId == userId);
+                if (user != null && user.UserRoleId == "Admin")
+                {
+                    throw new InvalidOperationException("Cannot delete admin account");
+                }
+                var status = await _userRepository.Delete(userId);
+                if (status == 0)
+                {
+                    throw new ArgumentException("User not found or could not be deleted.");
+                }
+            }
+            catch(Exception ex) {
+                throw new InternalException("Fail to delete ", ex);
             }
 
         }
@@ -75,16 +95,21 @@ namespace ShareResource.Services
         /// <exception cref="ArgumentNullException">Thrown when userId is null or empty.</exception>
         public async Task<User> GetUserProfile(string userId)
         {
-            if (string.IsNullOrWhiteSpace(userId)) throw new ArgumentNullException(nameof(userId));
-            var userContext = this._userRepository.GetDbSet();
-
-            var user = await userContext.Include(u => u.UserRole!).ThenInclude(r => r.RolePermissions!).SingleOrDefaultAsync(u=>u.UserId==userId);
-            if (user == null)
+            try
             {
-                throw new ArgumentException("User not found.");
-            }
+                if (string.IsNullOrWhiteSpace(userId)) throw new ArgumentNullException(nameof(userId));
+                var userContext = this._userRepository.GetDbSet();
 
-            return user;
+                var user = await userContext.Include(u => u.UserRole!).ThenInclude(r => r.RolePermissions!).SingleOrDefaultAsync(u => u.UserId == userId);
+                if (user == null)
+                {
+                    throw new ArgumentException("User not found.");
+                }
+                return user;
+            }
+            catch (Exception ex) {
+                throw new InternalException("Cant find user ", ex);
+            }
         }
 
         /// <summary>
@@ -107,7 +132,10 @@ namespace ShareResource.Services
                 user.UserRoleId = updateUserRoleDto.RoleId;
                 await _userRepository.Update(user);
             }
-            catch { throw; }
+            catch(Exception ex)
+            {
+                throw new InternalException("Cant update account ", ex);
+            }
         }
 
         /// <summary>
@@ -119,17 +147,23 @@ namespace ShareResource.Services
         /// <exception cref="InvalidOperationException">Thrown when user could not be deleted.</exception>
         public async Task DeleteUserAccount(string adminId,string userId)
         {
-            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(adminId)) throw new ArgumentNullException();
-
-            var admin = await _userRepository.FindOneById(adminId);
-            if (admin == null) throw new ArgumentException("admin does not exist");
-            var user = await _userRepository.FindOneById(userId);
-            if (user == null) throw new ArgumentException("user does not exist");
-
-            var status = await _userRepository.Delete(user);
-            if (status == 0)
+            try
             {
-                throw new InvalidOperationException("User could not be deleted.");
+                if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(adminId)) throw new ArgumentNullException();
+
+                var admin = await _userRepository.FindOneById(adminId);
+                if (admin == null) throw new ArgumentException("admin does not exist");
+                var user = await _userRepository.FindOneById(userId);
+                if (user == null) throw new ArgumentException("user does not exist");
+
+                var status = await _userRepository.Delete(user.UserId!);
+                if (status == 0)
+                {
+                    throw new InvalidOperationException("User could not be deleted.");
+                }
+            }
+            catch (Exception ex) {
+                throw new InternalException("Cant delete account ",ex);
             }
 
         }

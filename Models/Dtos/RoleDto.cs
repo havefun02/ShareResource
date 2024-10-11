@@ -4,9 +4,8 @@ namespace ShareResource.Models.Dtos
 {
     public class RoleDto
     {
-        public string RoleId { get; set; }=string.Empty;
         public string RoleName { get; set; }=string.Empty;
-        public List<Permission>? RolePermissions { get; set; }
+        public List<string> RolePermissionsId { get; set; }=new List<string>();
 
     }
 }

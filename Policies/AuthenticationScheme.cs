@@ -46,7 +46,6 @@ namespace ShareResource.Policies
                 var newAccessToken = _jwtService.GenerateToken(tokenInfo.User!);
                 if (!string.IsNullOrEmpty(newAccessToken))
                 {
-                    Context.Response.Cookies.Delete("accessToken");
                     Context.Response.Cookies.Append("accessToken", newAccessToken, new CookieOptions
                     {
                         HttpOnly = true,
@@ -55,7 +54,6 @@ namespace ShareResource.Policies
 
                     var newRefreshToken = await _authService.UpdateTokenAsync(tokenInfo);
                     Console.WriteLine($"{newRefreshToken.RefreshToken}");
-                    Context.Response.Cookies.Delete("refreshToken");
                     Context.Response.Cookies.Append("refreshToken", newRefreshToken.RefreshToken!, new CookieOptions
                     {
                         HttpOnly = true,

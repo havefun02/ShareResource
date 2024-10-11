@@ -188,7 +188,7 @@ namespace ShareResource.Controllers
                 if (updateStatus != null) {
 
                     var roleResult=_mapper.Map<RoleResultDto>(updateStatus);
-                    return Ok(updateStatus);
+                    return Ok(roleResult);
                 }
                 else
                 {
@@ -200,7 +200,7 @@ namespace ShareResource.Controllers
             }
         }
         [Authorize]
-        [HttpPost("admins/role-managements/{roleId}")]
+        [HttpPost("admins/role-managements/")]
         public async Task<ActionResult<RoleResultDto>> CreateRole([FromBody] RoleDto roleDto)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);

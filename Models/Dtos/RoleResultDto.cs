@@ -2,8 +2,8 @@
 {
     public class RoleResultDto
     {
-        public string? RoleName { get; set; }
-        public List<PermissionResultDto>? UserPermissions { get; set; }
+        public string? Role { get; set; }
+        public List<PermissionResultDto>? Permissions { get; set; }
 
     }
 }

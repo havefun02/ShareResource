@@ -5,36 +5,41 @@ using ShareResource.Database;
 using ShareResource.Interfaces;
 using ShareResource.Models.Dtos;
 using ShareResource.Models.Entities;
+using System.Linq;
 
 namespace ShareResource.Services
 {
     public class RoleService : IRoleService<Role>
     {
         private readonly IRepository<Role,AppDbContext> _roleRepository;
+        private readonly IRepository<RolePermission, AppDbContext> _rolePermissionsRepository;
+
         private readonly IMapper _mapper;
 
-        public RoleService(IRepository<Role, AppDbContext> roleRepository,IMapper mapper) {
+        public RoleService(IRepository<Role, AppDbContext> roleRepository,IMapper mapper, IRepository<RolePermission, AppDbContext> rolePermissionsRepository) {
             
             _roleRepository = roleRepository;
+            _rolePermissionsRepository = rolePermissionsRepository;
             _mapper = mapper;
         }
         public async Task<Role> CreateRole(RoleDto roleDto, string adminId)
         {
-            if (roleDto == null || roleDto.RoleId == string.Empty || roleDto.RolePermissions==null)
+            if (roleDto == null || roleDto.RoleName == string.Empty || roleDto.RolePermissionsId==null)
             {
                 throw new ArgumentException("Invalid role data.");
             }
+            var roleId=Guid.NewGuid().ToString();   
             var rolePermissions = new List<RolePermission>();
-            foreach (var p in roleDto.RolePermissions)
+            foreach (var p in roleDto.RolePermissionsId)
             {
                 var rp=new RolePermission();
-                rp.RoleId=roleDto.RoleId;
-                rp.PermissionId=p.PermissionId;
+                rp.RoleId= roleId;
+                rp.PermissionId=p;
                 rolePermissions.Add(rp);
             }
             var newRole = new Role
             {
-                RoleId = roleDto.RoleId,
+                RoleId = roleId,
                 RoleName = roleDto.RoleName,
                 RolePermissions = rolePermissions // Assuming RoleDto contains a list of permissions
             };
@@ -56,7 +61,7 @@ namespace ShareResource.Services
                 throw new KeyNotFoundException($"Role with ID {roleId} not found.");
             }
 
-            var status=await _roleRepository.Delete(roleToDelete);
+            var status=await _roleRepository.Delete(roleToDelete.RoleId!);
             if (status==0) { throw new InvalidOperationException("Cant delete the role"); }
             return status;
         }
@@ -74,7 +79,6 @@ namespace ShareResource.Services
             {
                 throw new ArgumentException("Invalid role update data.");
             }
-
             var roleToUpdate = await _roleRepository.FindOneById(roleId);
             if (roleToUpdate == null)
             {
@@ -83,17 +87,36 @@ namespace ShareResource.Services
 
             roleToUpdate.RoleName = updateRole.RoleName;
             roleToUpdate.RoleDescription= updateRole.RoleDescription;
+            var rpContext=_rolePermissionsRepository.GetDbSet();
+            var existingPermissions=await rpContext.Where(rp=>rp.RoleId==roleId).Select(rp=>rp.PermissionId).ToListAsync();
+
             var rolePermissions = new List<RolePermission>();
-            foreach (var p in updateRole.RolePermissions!)
+            foreach (var p in updateRole.RolePermissionsId!)
             {
-                var rp = new RolePermission();
-                rp.RoleId = roleId;
-                rp.PermissionId = p.PermissionId;
-                rolePermissions.Add(rp);
+                if (!existingPermissions.Contains(p)) 
+                {
+                    var rp = new RolePermission();
+                    rp.RoleId = roleId;
+                    rp.PermissionId = p;
+                    rolePermissions.Add(rp);
+                }
             }
-            roleToUpdate.RolePermissions=rolePermissions;
-            var newRole=await _roleRepository.Update(roleToUpdate);
-            return newRole;
+            roleToUpdate.RolePermissions = rolePermissions;
+            var permissionsToRemove = existingPermissions
+            .Where(rp =>!updateRole.RolePermissionsId.Contains(rp!))
+            .ToList();
+            foreach (var permission in permissionsToRemove)
+            {
+                var deleteResult = await rpContext.Where(rp => rp.PermissionId == permission && rp.RoleId == roleId).ExecuteDeleteAsync();
+            }
+            var newRole = await _roleRepository.Update(roleToUpdate);
+            var roleDbContext = _roleRepository.GetDbSet();
+            var roles = await roleDbContext.Include(r => r.RolePermissions!).SingleOrDefaultAsync(rp => rp.RoleId == roleId);
+            if (roles == null)
+            {
+                throw new InvalidOperationException("Error occured while updating role");
+            }
+            return roles;
         }
     }
 }

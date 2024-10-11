@@ -9,7 +9,7 @@
       "ShareResource/1.0.0": {
         "dependencies": {
           "AutoMapper": "13.0.1",
-          "CRUDFramework": "1.0.3",
+          "CRUDFramework": "1.0.0",
           "Microsoft.EntityFrameworkCore": "8.0.0",
           "Microsoft.EntityFrameworkCore.Design": "8.0.0",
           "Microsoft.IdentityModel.Tokens": "8.0.0",
@@ -33,14 +33,14 @@
           }
         }
       },
-      "CRUDFramework/1.0.3": {
+      "CRUDFramework/1.0.0": {
         "dependencies": {
           "Microsoft.EntityFrameworkCore": "8.0.0"
         },
         "runtime": {
           "lib/net8.0/CRUDFramework.dll": {
-            "assemblyVersion": "1.0.3.0",
-            "fileVersion": "1.0.3.0"
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
           }
         }
       },
@@ -767,12 +767,12 @@
       "path": "automapper/13.0.1",
       "hashPath": "automapper.13.0.1.nupkg.sha512"
     },
-    "CRUDFramework/1.0.3": {
+    "CRUDFramework/1.0.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-dG4Lt7kGS+QAHzzX1BSDnku62dGcpbE7A4Peey5++UBpIEh5wjwYMkL/ppPofMDI/bLZwlTA4hWLujUFS1P/sA==",
-      "path": "crudframework/1.0.3",
-      "hashPath": "crudframework.1.0.3.nupkg.sha512"
+      "sha512": "sha512-9mbHAzVW9QiYFbomn9qu6kFE4HtFEW9nWM1ugQBbC9vv2tic6UUnC5w/pK5aF6sxVzes45PSiNGKE67Vf2zrBg==",
+      "path": "crudframework/1.0.0",
+      "hashPath": "crudframework.1.0.0.nupkg.sha512"
     },
     "Humanizer.Core/2.14.1": {
       "type": "package",

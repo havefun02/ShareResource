@@ -91,12 +91,12 @@ namespace ShareResource.Database
 
                 entity.Property(r => r.RoleName)
                       .HasMaxLength(50) 
-                      .IsRequired(); 
+                      .IsRequired();
+                entity.HasIndex(r => r.RoleName)
+                    .IsUnique();
 
                 entity.Property(r => r.RoleDescription)
                       .HasMaxLength(200);
-
-
             });
             modelBuilder.Entity<Permission>(entity =>
             {
