@@ -112,8 +112,7 @@ namespace ShareResource.Controllers
         }
 
         [Authorize]
-
-        [HttpPut("admins/user-managements/{editedUserId}")]
+        [HttpDelete("admins/user-managements/{editedUserId}")]
         public async Task<IActionResult> DeleteUserAccount(string editedUserId)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -127,7 +126,6 @@ namespace ShareResource.Controllers
             return NoContent();
         }
         [Authorize]
-
         [HttpDelete("admins/role-managements/{roleId}")]
         public async Task<IActionResult> DeleteRole(string roleId)
         {

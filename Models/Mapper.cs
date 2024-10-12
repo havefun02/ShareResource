@@ -10,7 +10,7 @@ namespace ShareResource.Models
         public Mapping() {
             CreateMap<User, UserResultDto>()
                 .ForMember(m=>m.UserRole,opt=>opt
-                    .MapFrom(src=>new RoleResultDto {Role=src.UserRoleId,Permissions=src.UserRole!.RolePermissions!.Select(rp =>new PermissionResultDto{Permission=rp.PermissionId!}).ToList()
+                    .MapFrom(src=>new RoleResultDto {Role=src.UserRole!.RoleName,Permissions=src.UserRole!.RolePermissions!.Select(rp =>new PermissionResultDto{Permission=rp.PermissionId!}).ToList()
                     } ));
             CreateMap<Role, RoleResultDto>()
                .ForMember(r => r.Role, opt => opt.MapFrom(src => src.RoleName)) // Map RoleId directly

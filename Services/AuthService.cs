@@ -6,17 +6,22 @@ using Microsoft.EntityFrameworkCore;
 using ShareResource.Models.Dtos;
 using Microsoft.AspNetCore.Identity;
 using ShareResource.Database;
+using ShareResource.Exceptions;
+
 
 namespace ShareResource.Services
 {
     public class AuthService : IAuthService<User, Token>
     {
         private readonly IRepository<User,AppDbContext> _userRepository;
+        private readonly IRepository<Role, AppDbContext> _roleRepository;
+
         private readonly IRepository<Token, AppDbContext> _tokenRepository;
         private readonly IJwtService<User> _jwtService;
 
-        public AuthService(IRepository<User, AppDbContext> userRepository, IRepository<Token, AppDbContext> tokenRepository, IJwtService<User> jwtService)
+        public AuthService(IRepository<User, AppDbContext> userRepository, IRepository<Token, AppDbContext> tokenRepository, IRepository<Role, AppDbContext> roleRepository, IJwtService<User> jwtService)
         {
+            _roleRepository= roleRepository;
             _userRepository = userRepository;
             _tokenRepository = tokenRepository;
             _jwtService = jwtService;
@@ -127,11 +132,16 @@ namespace ShareResource.Services
             try
             {
                 var userContext = _userRepository.GetDbSet();
+                var roleContext = _roleRepository.GetDbSet();
+
                 var existingUser = await userContext.SingleOrDefaultAsync(u => u.UserEmail == user.Email);
                 if (existingUser != null)
                 {
                     throw new ArgumentException("User with this email already exists.");
                 }
+
+                var guestRole = await roleContext.SingleOrDefaultAsync(r => r.RoleName == "Guest");
+                if (guestRole == null) throw new Exception("Internal exception");
 
                 var newUser = new User
                 {
@@ -139,7 +149,7 @@ namespace ShareResource.Services
                     UserName = user.UserName,
                     UserEmail = user.Email,
                     UserPhone = user.UserPhone,
-                    UserRoleId = "Guest"
+                    UserRoleId = guestRole.RoleId,
                 };
 
                 var passwordHasher = new PasswordHasher<User>();

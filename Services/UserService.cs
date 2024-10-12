@@ -122,12 +122,20 @@ namespace ShareResource.Services
         {
             try
             {
+                var userContext = _userRepository.GetDbSet();
+
                 if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(adminId)) throw new ArgumentNullException();
 
-                var admin = await _userRepository.FindOneById(adminId);
-                if (admin == null) throw new ArgumentException("admin does not exist");
-                var user = await _userRepository.FindOneById(userId);
-                if (user == null) throw new ArgumentException("user does not exist");
+                var admin = await userContext.Include(u => u.UserRole).SingleOrDefaultAsync(u => u.UserId == adminId);
+                if (admin == null) throw new ArgumentException("Admin does not exist");
+                if (admin.UserRole == null || admin.UserRole.RoleName != "Owner")
+                {
+                    throw new UnauthorizedAccessException("Only Owner can update user roles.");
+                }
+
+
+                var user = await userContext.Include(u => u.UserRole).SingleOrDefaultAsync(u => u.UserId == userId && u.UserRole!.RoleName != "Owner");
+                if (user == null) throw new ArgumentException("Cannot update user due to mismatch permission or user does not exist");
 
                 user.UserRoleId = updateUserRoleDto.RoleId;
                 await _userRepository.Update(user);
@@ -145,27 +153,39 @@ namespace ShareResource.Services
         /// <exception cref="ArgumentNullException">Thrown when userId is null or empty.</exception>
         /// <exception cref="ArgumentException">Thrown when user does not exist.</exception>
         /// <exception cref="InvalidOperationException">Thrown when user could not be deleted.</exception>
-        public async Task DeleteUserAccount(string adminId,string userId)
+        public async Task DeleteUserAccount(string adminId, string userId)
         {
             try
             {
+                var userContext = _userRepository.GetDbSet();
+
                 if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(adminId)) throw new ArgumentNullException();
 
-                var admin = await _userRepository.FindOneById(adminId);
-                if (admin == null) throw new ArgumentException("admin does not exist");
-                var user = await _userRepository.FindOneById(userId);
-                if (user == null) throw new ArgumentException("user does not exist");
+                // Get the admin and check role
+                var admin = await userContext.Include(u => u.UserRole).SingleOrDefaultAsync(u => u.UserId == adminId);
+                if (admin == null) throw new ArgumentException("Admin does not exist");
 
+                if (admin.UserRole == null || admin.UserRole.RoleName != "Owner")
+                {
+                    throw new UnauthorizedAccessException("Only Owner can delete user accounts.");
+                }
+
+                // Find the user to delete (must be Guest role to delete)
+                var user = await userContext.Include(u => u.UserRole).SingleOrDefaultAsync(u => u.UserId == userId && u.UserRole!.RoleName != "Owner");
+                if (user == null) throw new ArgumentException("Cannot delete user due to mismatch permission or user does not exist");
+
+                // Delete user account
                 var status = await _userRepository.Delete(user.UserId!);
                 if (status == 0)
                 {
                     throw new InvalidOperationException("User could not be deleted.");
                 }
             }
-            catch (Exception ex) {
-                throw new InternalException("Cant delete account ",ex);
+            catch (Exception ex)
+            {
+                throw new InternalException("Cannot delete account", ex);
             }
-
         }
+
     }
 }
