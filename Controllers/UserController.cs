@@ -95,7 +95,7 @@ namespace ShareResource.Controllers
             }
         }
 
-        [Authorize()]
+        [Authorize(Policy = "OwnerOnly")]
         [HttpPut("admins/user-managements/{editedUserId}/update-role")]
         public async Task<IActionResult> UpdateUserRole([FromBody] UpdateUserRoleDto updateUserRoleDto, string editedUserId)
         {
@@ -111,7 +111,7 @@ namespace ShareResource.Controllers
             return Ok("User role updated successfully.");
         }
 
-        [Authorize]
+        [Authorize(Policy ="OwnerOnly")]
         [HttpDelete("admins/user-managements/{editedUserId}")]
         public async Task<IActionResult> DeleteUserAccount(string editedUserId)
         {
@@ -125,7 +125,6 @@ namespace ShareResource.Controllers
             await _adminService.DeleteUserAccount(userId,editedUserId);
             return NoContent();
         }
-        [Authorize]
         [HttpDelete("admins/role-managements/{roleId}")]
         public async Task<IActionResult> DeleteRole(string roleId)
         {

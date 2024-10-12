@@ -54,7 +54,16 @@ namespace ShareResource
                 });
             });
             services.AddAuthentication("JWT-COOKIES-SCHEME").AddScheme<AuthenticationSchemeOptions, AppAuthenticationHandler>("JWT-COOKIES-SCHEME", null);
-            services.AddAuthorization();
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("OwnerOnly", policy =>
+            policy.RequireRole("Owner"));
+                options.AddPolicy("AdminOrOwner", policy =>
+      policy.RequireAssertion(context =>
+          context.User.IsInRole("Owner") || context.User.IsInRole("Admin")));
+
+
+            });
             services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo { Title = "DEVELOPMENT API", Version = "v1" }); });
             services.AddControllersWithViews();
         }
