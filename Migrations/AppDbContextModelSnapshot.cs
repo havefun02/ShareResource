@@ -19,6 +19,67 @@ namespace ShareResource.Migrations
                 .HasAnnotation("ProductVersion", "8.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("ShareResource.Models.Entities.Img", b =>
+                {
+                    b.Property<string>("ImgId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<long>("FileSize")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L);
+
+                    b.Property<string>("FileUrl")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsPrivate")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("UploadDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("ImgId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Imgs");
+                });
+
+            modelBuilder.Entity("ShareResource.Models.Entities.ImgTags", b =>
+                {
+                    b.Property<string>("TagId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("ImgId")
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("TagId", "ImgId");
+
+                    b.HasIndex("ImgId");
+
+                    b.ToTable("ImgTags");
+                });
+
             modelBuilder.Entity("ShareResource.Models.Entities.Permission", b =>
                 {
                     b.Property<string>("PermissionId")
@@ -43,6 +104,11 @@ namespace ShareResource.Migrations
                         {
                             PermissionId = "Write",
                             PermissionName = "Write"
+                        },
+                        new
+                        {
+                            PermissionId = "FullPermissions",
+                            PermissionName = "FullPermissions"
                         });
                 });
 
@@ -62,6 +128,9 @@ namespace ShareResource.Migrations
 
                     b.HasKey("RoleId");
 
+                    b.HasIndex("RoleName")
+                        .IsUnique();
+
                     b.ToTable("Roles");
 
                     b.HasData(
@@ -69,6 +138,11 @@ namespace ShareResource.Migrations
                         {
                             RoleId = "Admin",
                             RoleName = "Admin"
+                        },
+                        new
+                        {
+                            RoleId = "Owner",
+                            RoleName = "Owner"
                         },
                         new
                         {
@@ -106,7 +180,27 @@ namespace ShareResource.Migrations
                         {
                             RoleId = "Guest",
                             PermissionId = "Read"
+                        },
+                        new
+                        {
+                            RoleId = "Owner",
+                            PermissionId = "FullPermissions"
                         });
+                });
+
+            modelBuilder.Entity("ShareResource.Models.Entities.Tag", b =>
+                {
+                    b.Property<string>("TagId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("TagName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("TagId");
+
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("ShareResource.Models.Entities.Token", b =>
@@ -171,13 +265,52 @@ namespace ShareResource.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = "b42b1327-3b2e-4584-b99b-ad7662ac0fe2",
+                            UserId = "d7786ace-9762-44d5-ae2d-f982c5f07428",
                             UserEmail = "Admin@gmail.com",
                             UserName = "Lapphan",
-                            UserPassword = "AQAAAAIAAYagAAAAENOYkz9xEvjuv+6BDnPBcJxnW1Wi1hZyrJ+O8zdXXqpY0h1iAn3Ur+omOlIaNwL0Rw==",
+                            UserPassword = "AQAAAAIAAYagAAAAEHSQlgMGYAdoXhWA1KoXnKgW66/YG38IYfpRHh8OTdayY0FsxCpGGfSrcrGvObsU0Q==",
                             UserPhone = "123456789",
                             UserRoleId = "Admin"
+                        },
+                        new
+                        {
+                            UserId = "6c2f3621-2ee8-4a5f-ba60-d5dc5b319eb5",
+                            UserEmail = "Owner@gmail.com",
+                            UserName = "Lapphan",
+                            UserPassword = "AQAAAAIAAYagAAAAEHDMRKZgo7Z+G0wov0uD5ln9/Fz3aupQlOeCrTcwUVr4fsYaqV2srYggLG5wgICYTg==",
+                            UserPhone = "123456789",
+                            UserRoleId = "Owner"
                         });
+                });
+
+            modelBuilder.Entity("ShareResource.Models.Entities.Img", b =>
+                {
+                    b.HasOne("ShareResource.Models.Entities.User", "User")
+                        .WithMany("UserImgs")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ShareResource.Models.Entities.ImgTags", b =>
+                {
+                    b.HasOne("ShareResource.Models.Entities.Img", "Imgs")
+                        .WithMany("ImgTags")
+                        .HasForeignKey("ImgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ShareResource.Models.Entities.Tag", "Tags")
+                        .WithMany("ImgTags")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Imgs");
+
+                    b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("ShareResource.Models.Entities.RolePermission", b =>
@@ -219,6 +352,11 @@ namespace ShareResource.Migrations
                     b.Navigation("UserRole");
                 });
 
+            modelBuilder.Entity("ShareResource.Models.Entities.Img", b =>
+                {
+                    b.Navigation("ImgTags");
+                });
+
             modelBuilder.Entity("ShareResource.Models.Entities.Permission", b =>
                 {
                     b.Navigation("RolePermissions");
@@ -231,8 +369,15 @@ namespace ShareResource.Migrations
                     b.Navigation("RoleUsers");
                 });
 
+            modelBuilder.Entity("ShareResource.Models.Entities.Tag", b =>
+                {
+                    b.Navigation("ImgTags");
+                });
+
             modelBuilder.Entity("ShareResource.Models.Entities.User", b =>
                 {
+                    b.Navigation("UserImgs");
+
                     b.Navigation("UserToken");
                 });
 #pragma warning restore 612, 618

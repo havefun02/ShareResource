@@ -41,6 +41,8 @@ namespace ShareResource
             services.AddScoped<IAdminService<User>, UserService>();
             services.AddScoped<IRoleService<Role>, RoleService>();
             services.AddScoped<IAuthService<User, Token>, AuthService>();
+            services.AddScoped<IResource<Img>, ResourceService>();
+
             services.AddSingleton<IJwtService<User>,JwtService>();
 
 

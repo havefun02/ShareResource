@@ -11,6 +11,9 @@ namespace ShareResource.Database
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
         public DbSet<Token> Tokens { get; set; }
+        public DbSet<Img> Imgs { get; set; }
+        public DbSet<Tag> Tags { get; set; }
+        public DbSet<ImgTags> ImgTags { get; set; }
 
         public override int SaveChanges()
         {
@@ -79,8 +82,18 @@ namespace ShareResource.Database
                     UserPhone = "123456789",
                     UserRoleId = "Admin",
                 };
+                var ownerUser = new User
+                {
+                    UserId = Guid.NewGuid().ToString(),
+                    UserEmail = "Owner@gmail.com",
+                    UserName = "Lapphan",
+                    UserPhone = "123456789",
+                    UserRoleId = "Owner",
+                };
                 user.UserPassword = new PasswordHasher<User>().HashPassword(user,"adminpassword");
-                entity.HasData(user);
+                ownerUser.UserPassword = new PasswordHasher<User>().HashPassword(ownerUser, "adminpassword");
+
+                entity.HasData([user, ownerUser]);
             });
             modelBuilder.Entity<Role>(entity =>
             {
@@ -113,18 +126,71 @@ namespace ShareResource.Database
                 entity.HasKey(t=> t.TokenId);
                 entity.Property(t=>t.IsRevoked).HasDefaultValue(false);
             });
+            modelBuilder.Entity<Img>(entity =>
+            {
+                entity.HasKey(e => e.ImgId);
+
+                entity.Property(e => e.FileName)
+                    .IsRequired()
+                    .HasMaxLength(255); 
+
+                entity.Property(e => e.FileUrl)
+                    .IsRequired();  
+
+                entity.Property(e => e.ContentType)
+                    .IsRequired()  
+                    .HasMaxLength(50);  
+
+                entity.Property(e => e.FileSize)
+                    .IsRequired() 
+                    .HasDefaultValue(0) 
+                    .HasColumnType("bigint");
+
+                entity.Property(e => e.UploadDate)
+                    .IsRequired();
+
+                entity.Property(e => e.UserId)
+                    .IsRequired(); 
+
+                entity.HasOne(e => e.User)  
+                    .WithMany(u => u.UserImgs)  
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade); 
+
+                entity.Property(e => e.Description)
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.IsPrivate)
+                    .IsRequired(); 
+            });
+            modelBuilder.Entity<Tag>(entity =>
+            {
+                entity.HasKey(t => t.TagId);
+                entity.Property(e => e.TagName).IsRequired().HasMaxLength(100);
+            });
+            modelBuilder.Entity<ImgTags>(entity => {
+                entity.HasKey(it => new { it.TagId, it.ImgId });
+                entity.HasOne(it=>it.Imgs).WithMany(i=>i.ImgTags).HasForeignKey(it => it.ImgId);
+                entity.HasOne(it => it.Tags).WithMany(i => i.ImgTags).HasForeignKey(it => it.TagId);
+
+            });
             var permisisons = new List<Permission>();
             permisisons.Add(new Permission { PermissionId = "Read",PermissionName="Read" });
             permisisons.Add(new Permission { PermissionId = "Write", PermissionName = "Write" });
+            permisisons.Add(new Permission { PermissionId = "FullPermissions", PermissionName = "FullPermissions" });
             modelBuilder.Entity<Permission>().HasData(permisisons);
+
             var roles = new List<Role>();
             roles.Add(new Role { RoleId = "Admin", RoleName = "Admin" });
+            roles.Add(new Role { RoleId = "Owner", RoleName = "Owner" });
             roles.Add(new Role { RoleId = "Guest", RoleName = "Guest" });
             modelBuilder.Entity<Role>().HasData(roles);
+            
             var rolePermissions = new List<RolePermission>();
             rolePermissions.Add(new RolePermission { RoleId = "Admin", PermissionId = "Read" });
             rolePermissions.Add(new RolePermission { RoleId = "Admin", PermissionId = "Write" });
             rolePermissions.Add(new RolePermission { RoleId = "Guest", PermissionId = "Read" });
+            rolePermissions.Add(new RolePermission { RoleId = "Owner", PermissionId = "FullPermissions" });
             modelBuilder.Entity<RolePermission>().HasData(rolePermissions);
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

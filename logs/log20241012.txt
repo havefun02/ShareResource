@@ -317,3 +317,31 @@ ShareResource.Exceptions.InternalException: Cant delete account
    at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
    at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
    at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddlewareImpl.Invoke(HttpContext context)
+2024-10-12 11:26:02.058 +07:00 [INF] Handling request: PUT /api/v1/users/admins/user-managements/761787c9-4eed-48f8-a08b-3c4eb8126468/update-role
+2024-10-12 11:26:07.348 +07:00 [INF] AuthenticationScheme: JWT-COOKIES-SCHEME was forbidden.
+2024-10-12 11:26:07.364 +07:00 [INF] Finished handling request: PUT /api/v1/users/admins/user-managements/761787c9-4eed-48f8-a08b-3c4eb8126468/update-role with status code 403 in 5307ms
+2024-10-12 11:29:54.268 +07:00 [ERR] Failed executing DbCommand (109ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX `IX_Roles_RoleName` ON `Roles` (`RoleName`);
+2024-10-12 11:35:30.298 +07:00 [ERR] Failed executing DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO `Permissions` (`PermissionId`, `PermissionName`)
+VALUES ('FullPermissions', 'FullPermissions');
+2024-10-12 12:05:45.463 +07:00 [ERR] Failed executing DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE `Img` (
+    `ImgId` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
+    `FileName` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
+    `FileUrl` longtext CHARACTER SET utf8mb4 NOT NULL,
+    `ContentType` varchar(50) CHARACTER SET utf8mb4 NOT NULL,
+    `FileSize` bigint NOT NULL DEFAULT 0,
+    `UploadDate` datetime(6) NOT NULL DEFAULT GETDATE(),
+    `UserId` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
+    `Description` varchar(500) CHARACTER SET utf8mb4 NOT NULL,
+    `IsPrivate` tinyint(1) NOT NULL,
+    CONSTRAINT `PK_Img` PRIMARY KEY (`ImgId`),
+    CONSTRAINT `FK_Img_Users_UserId` FOREIGN KEY (`UserId`) REFERENCES `Users` (`UserId`) ON DELETE CASCADE
+) CHARACTER SET=utf8mb4;
+2024-10-12 12:08:41.229 +07:00 [ERR] Failed executing DbCommand (8ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Img` MODIFY COLUMN `UploadDate` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+2024-10-12 12:10:08.163 +07:00 [ERR] Failed executing DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Img` MODIFY COLUMN `UploadDate` datetime(6) NOT NULL;
+2024-10-12 12:11:44.716 +07:00 [ERR] Failed executing DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE `Img` DROP FOREIGN KEY `FK_Img_Users_UserId`;

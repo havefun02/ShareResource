@@ -11,6 +11,7 @@ namespace ShareResource.Models.Entities
         public string? UserPhone { get; set; }
         public string? UserRoleId {  get; set; }
         public virtual Role? UserRole {  get; set; }
+        public virtual ICollection<Img>? UserImgs { get; set; }
         public virtual Token? UserToken {  get; set; }
         
 
