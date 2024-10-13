@@ -1,0 +1,16 @@
+﻿@model IEnumerable<ShareResource.Models.ViewModels.ImgResult>
+
+@{
+    ViewData["Title"] = "Main";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="main-page">
+    <div id="status" class="alert d-none" role="alert"></div>
+
+    <!-- Include the image upload form partial view -->
+     @await Html.PartialAsync("_AddForm")
+
+    <!-- Include the image gallery partial view -->
+    @await Html.PartialAsync("_Gallery", Model)
+</div>

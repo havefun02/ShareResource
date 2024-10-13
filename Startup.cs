@@ -13,6 +13,8 @@ using ShareResource.Models.Entities;
 using ShareResource.Middlewares;
 using ShareResource.Models;
 using AutoMapper;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 namespace ShareResource
 {
     public class Startup
@@ -60,9 +62,6 @@ namespace ShareResource
             {
                 options.AddPolicy("OwnerOnly", policy =>
             policy.RequireRole("Owner"));
-                options.AddPolicy("AdminOrOwner", policy =>
-      policy.RequireAssertion(context =>
-          context.User.IsInRole("Owner") || context.User.IsInRole("Admin")));
 
 
             });
@@ -87,12 +86,13 @@ namespace ShareResource
             });
 
             app.UseCors("AllowAll");
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
             app.UseRouting();
             app.UseMiddleware<LoggerMiddleware>();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.UseDefaultFiles();
-            app.UseStaticFiles();
+
             app.UseStatusCodePages(async context =>
             {
                 var response = context.HttpContext.Response;

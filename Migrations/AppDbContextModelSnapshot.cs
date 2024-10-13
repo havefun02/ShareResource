@@ -107,6 +107,16 @@ namespace ShareResource.Migrations
                         },
                         new
                         {
+                            PermissionId = "Delete",
+                            PermissionName = "Delete"
+                        },
+                        new
+                        {
+                            PermissionId = "Execute",
+                            PermissionName = "Execute"
+                        },
+                        new
+                        {
                             PermissionId = "FullPermissions",
                             PermissionName = "FullPermissions"
                         });
@@ -148,6 +158,11 @@ namespace ShareResource.Migrations
                         {
                             RoleId = "Guest",
                             RoleName = "Guest"
+                        },
+                        new
+                        {
+                            RoleId = "User",
+                            RoleName = "User"
                         });
                 });
 
@@ -178,8 +193,23 @@ namespace ShareResource.Migrations
                         },
                         new
                         {
+                            RoleId = "Admin",
+                            PermissionId = "Delete"
+                        },
+                        new
+                        {
                             RoleId = "Guest",
                             PermissionId = "Read"
+                        },
+                        new
+                        {
+                            RoleId = "User",
+                            PermissionId = "Read"
+                        },
+                        new
+                        {
+                            RoleId = "User",
+                            PermissionId = "Write"
                         },
                         new
                         {
@@ -265,19 +295,19 @@ namespace ShareResource.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = "d7786ace-9762-44d5-ae2d-f982c5f07428",
+                            UserId = "419c2037-2a38-4d6a-8b6a-9f6edd4379f5",
                             UserEmail = "Admin@gmail.com",
                             UserName = "Lapphan",
-                            UserPassword = "AQAAAAIAAYagAAAAEHSQlgMGYAdoXhWA1KoXnKgW66/YG38IYfpRHh8OTdayY0FsxCpGGfSrcrGvObsU0Q==",
+                            UserPassword = "AQAAAAIAAYagAAAAEN7RXAXV5YV/bMDnRFtystRnzqOXS2QiW1KrLrepsOJEBUI2+EVNOLQh+AJBVfwpeA==",
                             UserPhone = "123456789",
                             UserRoleId = "Admin"
                         },
                         new
                         {
-                            UserId = "6c2f3621-2ee8-4a5f-ba60-d5dc5b319eb5",
+                            UserId = "99b88640-2b16-4604-bc52-c9ceb3127e0c",
                             UserEmail = "Owner@gmail.com",
                             UserName = "Lapphan",
-                            UserPassword = "AQAAAAIAAYagAAAAEHDMRKZgo7Z+G0wov0uD5ln9/Fz3aupQlOeCrTcwUVr4fsYaqV2srYggLG5wgICYTg==",
+                            UserPassword = "AQAAAAIAAYagAAAAENGEZzz2Cz343rl61sMUwoo/SEVwXGiY+3b6oEkapQ2QTboTV+qLs1MqLMG4WJVipA==",
                             UserPhone = "123456789",
                             UserRoleId = "Owner"
                         });

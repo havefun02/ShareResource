@@ -177,6 +177,8 @@ namespace ShareResource.Database
             var permisisons = new List<Permission>();
             permisisons.Add(new Permission { PermissionId = "Read",PermissionName="Read" });
             permisisons.Add(new Permission { PermissionId = "Write", PermissionName = "Write" });
+            permisisons.Add(new Permission { PermissionId = "Delete", PermissionName = "Delete" });
+            permisisons.Add(new Permission { PermissionId = "Execute", PermissionName = "Execute" });
             permisisons.Add(new Permission { PermissionId = "FullPermissions", PermissionName = "FullPermissions" });
             modelBuilder.Entity<Permission>().HasData(permisisons);
 
@@ -184,12 +186,18 @@ namespace ShareResource.Database
             roles.Add(new Role { RoleId = "Admin", RoleName = "Admin" });
             roles.Add(new Role { RoleId = "Owner", RoleName = "Owner" });
             roles.Add(new Role { RoleId = "Guest", RoleName = "Guest" });
+            roles.Add(new Role { RoleId = "User", RoleName = "User" });
+
             modelBuilder.Entity<Role>().HasData(roles);
             
             var rolePermissions = new List<RolePermission>();
             rolePermissions.Add(new RolePermission { RoleId = "Admin", PermissionId = "Read" });
             rolePermissions.Add(new RolePermission { RoleId = "Admin", PermissionId = "Write" });
+            rolePermissions.Add(new RolePermission { RoleId = "Admin", PermissionId = "Delete" });
+
             rolePermissions.Add(new RolePermission { RoleId = "Guest", PermissionId = "Read" });
+            rolePermissions.Add(new RolePermission { RoleId = "User", PermissionId = "Read" });
+            rolePermissions.Add(new RolePermission { RoleId = "User", PermissionId = "Write" });
             rolePermissions.Add(new RolePermission { RoleId = "Owner", PermissionId = "FullPermissions" });
             modelBuilder.Entity<RolePermission>().HasData(rolePermissions);
         }

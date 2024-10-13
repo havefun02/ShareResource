@@ -1,6 +1,7 @@
 ﻿using CRUDFramework.Interfaces;
 using ShareResource.Database;
 using ShareResource.Interfaces;
+using ShareResource.Exceptions;
 using ShareResource.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -80,9 +81,16 @@ namespace ShareResource.Services
 
         public async Task<Img> UploadResource(Img resource, string userId)
         {
-            resource.UserId = userId;
-            var createdResult=await _repository.CreateAsync(resource);
-            return createdResult;
+            try
+            {
+
+                resource.UserId = userId;
+                var createdResult = await _repository.CreateAsync(resource);
+                return createdResult;
+            }
+            catch (Exception ex) {
+                throw new InternalException("Save img failed due to", ex);
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using ShareResource.Models.Dtos;
 using ShareResource.Models.Entities;
+using ShareResource.Models.ViewModels;
 
 
 namespace ShareResource.Models
@@ -8,6 +9,13 @@ namespace ShareResource.Models
     public class Mapping:Profile
     {
         public Mapping() {
+            CreateMap<Img, ImgResult>();
+            CreateMap<ImgDto, Img>()
+            .ForMember(dest => dest.ImgId, opt =>opt.MapFrom(src=>Guid.NewGuid().ToString())) // Assuming ImgId is generated and not in the DTO
+            .ForMember(dest => dest.FileUrl, opt => opt.Ignore()) // Ignore if it's set elsewhere
+            .ForMember(dest => dest.ContentType, opt => opt.MapFrom(src => src.file!.ContentType)) // Mapping ContentType from the file
+            .ForMember(dest => dest.FileSize, opt => opt.MapFrom(src => src.file!.Length)) // Mapping file size
+            .ForMember(dest => dest.UploadDate, opt => opt.MapFrom(src => DateTime.UtcNow)); // Set current date
             CreateMap<User, UserResultDto>()
                 .ForMember(m=>m.UserRole,opt=>opt
                     .MapFrom(src=>new RoleResultDto {Role=src.UserRole!.RoleName,Permissions=src.UserRole!.RolePermissions!.Select(rp =>new PermissionResultDto{Permission=rp.PermissionId!}).ToList()
