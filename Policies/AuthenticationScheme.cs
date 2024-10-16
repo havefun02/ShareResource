@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using ShareResource.Decorators;
 using ShareResource.Interfaces;
 using ShareResource.Models.Entities;
 using System.Security.Claims;
@@ -12,20 +15,32 @@ namespace ShareResource.Policies
     {
         private readonly IJwtService<User> _jwtService;
         private readonly IAuthService<User,Token>  _authService;
-        private readonly RouteManager _routeManager;
 
         public AppAuthenticationHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
             UrlEncoder encoder,
             IJwtService<User> jwtService,
-            RouteManager routeManager,IAuthService<User, Token> authService
+            IAuthService<User, Token> authService
             )
             : base(options, logger, encoder)
         {
             _jwtService = jwtService;
-            _routeManager = routeManager;
             _authService = authService;
+        }
+
+
+        bool CanBeIgnorable(HttpContext context)
+        {
+            var endpoint = context.GetEndpoint();
+            if (endpoint == null) return false;
+
+            var controllerActionDescriptor = endpoint.Metadata
+                .GetMetadata<ControllerActionDescriptor>();
+
+            return controllerActionDescriptor?.MethodInfo
+                .GetCustomAttributes(typeof(AuthorizeAttribute), true)
+                .Any() ?? false;
         }
         private async Task<AuthenticateResult> HandleExpiredTokenAsync()
         {
@@ -75,14 +90,7 @@ namespace ShareResource.Policies
         }
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            var path = Context.Request.Path.Value;
-            if (path == null)
-            {
-                Context.Response.StatusCode = 404;
-                await Context.Response.WriteAsync("Not found");
-                return AuthenticateResult.Fail("Not found");
-            }
-            if (!_routeManager.IsIgnore(path!))
+            if (CanBeIgnorable(Context))
             {
                 var token = Context.Request.Cookies["accessToken"];
                 if (string.IsNullOrEmpty(token))

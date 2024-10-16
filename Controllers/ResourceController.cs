@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using AutoMapper;
 using System.Security.Claims;
 using ShareResource.Models.ViewModels;
+using ShareResource.Decorators;
+
 
 namespace ShareResource.Controllers
 {
@@ -52,6 +54,7 @@ namespace ShareResource.Controllers
         ///   
         [HttpPost]
         [Authorize]
+        [FileValidator]
         public async Task<IActionResult> Upload([FromForm] ImgDto fileMeta)
         {
             // Get user ID from claims
@@ -65,22 +68,9 @@ namespace ShareResource.Controllers
                 return BadRequest("");
             }
 
-            // Validate file and model state
-            if (fileMeta.file == null || fileMeta.file.Length == 0)
-            {
-                TempData["Error"] = "No file selected. Please choose a file to upload.";
-                return BadRequest("");
-            }
+            var fileExtension = Path.GetExtension(fileMeta.file!.FileName).ToLowerInvariant();
 
-            // Validate the file extension
-            var allowedExtensions = new[] { ".png", ".jpeg", ".jpg" };
-            var fileExtension = Path.GetExtension(fileMeta.file.FileName).ToLowerInvariant();
-
-            if (!allowedExtensions.Contains(fileExtension))
-            {
-                TempData["Error"] = "Invalid file extension. Only PNG and JPEG are allowed.";
-                return BadRequest();
-            }
+            
 
             // Check model state validity
             if (!ModelState.IsValid)

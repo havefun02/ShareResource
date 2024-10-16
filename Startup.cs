@@ -30,7 +30,6 @@ namespace ShareResource
 
             services.AddDbContext<AppDbContext>();
             services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
-            services.AddSingleton<RouteManager>();
             services.AddSingleton<IMapper>(provider =>
             {
                 var configuration = new MapperConfiguration(cfg =>
@@ -90,6 +89,8 @@ namespace ShareResource
             app.UseStaticFiles();
             app.UseRouting();
             app.UseMiddleware<LoggerMiddleware>();
+            app.UseMiddleware<FileValidationMiddleware>();
+
             app.UseAuthentication();
             app.UseAuthorization();
 
