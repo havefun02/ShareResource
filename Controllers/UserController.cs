@@ -38,7 +38,8 @@ namespace ShareResource.Controllers
                 var userResult = _mapper.Map<UserResultDto>(user);
                 return Ok(userResult);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return NotFound($"User with ID {userId} not found with {ex.Message}.");
             }
         }
@@ -62,7 +63,8 @@ namespace ShareResource.Controllers
                 var userResult = _mapper.Map<UserResultDto>(updatedUser);
                 return Ok(userResult);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return BadRequest(ex.Message);
             }
         }
@@ -84,7 +86,7 @@ namespace ShareResource.Controllers
                 HttpContext.Response.Cookies.Delete("refreshToken");
                 return Ok();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }

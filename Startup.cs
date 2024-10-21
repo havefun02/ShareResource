@@ -42,7 +42,10 @@ namespace ShareResource
             services.AddScoped<IAdminService<User>, UserService>();
             services.AddScoped<IRoleService<Role>, RoleService>();
             services.AddScoped<IAuthService<User, Token>, AuthService>();
-            services.AddScoped<IResource<Img>, ResourceService>();
+            services.AddScoped<IResourceMod<Img>, ResourceModService>();
+            services.AddScoped<IResourceAccess<Img>, ResourceAccessService>();
+            services.AddScoped<IPaginationService<Img>, OffsetPaginationService<Img>>();
+
 
             services.AddSingleton<IJwtService<User>,JwtService>();
 
@@ -109,10 +112,7 @@ namespace ShareResource
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller}/{action}/{id?}");
-            });
+                });
         }
     }
 }

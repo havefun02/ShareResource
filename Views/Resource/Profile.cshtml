@@ -1,0 +1,198 @@
+﻿@model ShareResource.Models.ViewModels.MainPageViewModel
+@{
+    ViewData["Title"] = "Profile";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="main-page">
+    <div id="status" class="alert d-none" role="alert"></div>
+    <div class="user-section">
+        <div class="flex-center col-6 form-container">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="fileName">File Name</label>
+                    <input type="text" class="form-control" id="fileName" name="FileName" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="file">Select File</label>
+                    <input type="file" class="form-control-file" id="file" name="file" accept=".png, .jpg, .jpeg" />
+                </div>
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </form>
+        </div>
+        <div class="flex-center col-6">
+            <div class="user-brief-container">
+                <div>
+                    @if (Model.User!.UserIcon != null && Model.User.UserIcon.Length > 0)
+                    {
+                        var base64Icon = Convert.ToBase64String(Model.User.UserIcon);
+                        <img src="data:image/png;base64,@base64Icon" alt="@Model.User.UserName's Icon" class="img-thumbnail" />
+                    }
+                    <p>User Name :<a> @Model.User.UserName</a> </p>
+                </div>
+                <div>
+
+                    <p>User Email:<a> @Model.User.UserEmail </a></p>
+                    <p >Total Items: <a id="total-items">@Model.Pagination!.total</a>
+                    </p>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_UserGallery", Model.Imgs)
+    @await Html.PartialAsync("_PaginationComponent",Model.Pagination)
+</div>
+@section Scripts {
+    <script>
+        function updateUrl(page) {
+            const url = new URL(window.location);
+            url.searchParams.set('page', page);
+            window.history.pushState({}, '', url);
+        }
+        function updatePagination(totalPages, currentPage) {
+            $("#pageNumbers").empty();
+            for (let i = 1; i <= totalPages; i++) {
+                const isCurrent = i === currentPage ? "current-page" : "";
+                $("#pageNumbers").append(`<button class="page-btn ${isCurrent}" data-page="${i}">${i}</button>`);
+            }
+
+            $("#prevPage").prop("disabled", currentPage === 1);
+            $("#nextPage").prop("disabled", currentPage === totalPages);
+        }
+
+        function incrementText(id) {
+            var currentText = $(`#${id}`).text();
+
+            var currentNumber = parseInt(currentText, 10);
+
+            currentNumber += 1;
+
+            $(`#${id}`).text(currentNumber);
+        }
+        function decrementText(id) {
+            var currentText = $(`#${id}`).text();
+
+            var currentNumber = parseInt(currentText, 10);
+
+            currentNumber = currentNumber - 1;
+
+            $(`#${id}`).text(currentNumber);
+        }
+        
+        function fetchUserPage(page, userId) {
+            $.ajax({
+                url: `api/v1/${userId}/resources?page=${page}`,
+                method: 'GET',
+                success: function (data) {
+                    $('#content').html(data);  // Update the content dynamically
+                    history.pushState(null, '', `?page=${page}`);  // Update the URL
+                },
+                error: function () {
+                    alert('Failed to load data.');
+                }
+            });
+        }
+        function fetchLocalPage(page) {
+            console.log("Fetch", page);
+            $.ajax({
+                url: `/api/v1/users/resources?page=${page}`,
+                method: 'GET',
+                success: function (data) {
+                    $('#gallery').empty();
+                    if (data.length > 0) {
+                        data.forEach(function (image) {
+                            const uploadDate = new Date(image.uploadDate);
+
+                            const options = { day: '2-digit', month: 'short', year: 'numeric' };
+                            const formattedDate = uploadDate.toLocaleDateString('en-GB', options).replace(/,/g, ''); // Remove any commas
+
+                            const imgHtml = `
+                                            <div class="col-md-4">
+                                                <div class="card mb-4">
+                                                    <img src="${image.fileUrl}" class="card-img-top" alt="${image.fileName} data-imgid="${image.ImgId}">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">${image.fileName}</h5>
+                                                                                                <p class="card-text">Uploaded on: ${formattedDate}</p>
+                                                    </div>
+                                                </div>
+                                            </div>`;
+                            $('#gallery').append(imgHtml);
+
+                        });
+                        updatePagination(Math.ceil(@Model.Pagination!.total/@Model.Pagination.limit), page);
+
+                                } else {
+                        $('#gallery').append('<div>No items found</div>');
+                    }
+                },
+                error: function () {
+                    alert('Failed to load data.');
+                }
+            });
+        }
+        
+        $(document).ready(function () {
+
+            
+            $("#prevPage").click( async function () {
+                const currentPage = parseInt($(".current-page").text());
+                if (currentPage > 1) {
+                    updateUrl(currentPage - 1);
+                    await fetchLocalPage(currentPage - 1);
+                }
+            });
+
+            $("#nextPage").click(async function () {
+                console.log("next page");
+                const currentPage = parseInt($(".current-page").text());
+                updateUrl(currentPage + 1);
+                await fetchLocalPage(currentPage + 1);
+
+            });
+            $('#uploadForm').on("submit", function (event) {
+                event.preventDefault();
+                const formData = new FormData(this);
+                function updateStatus(type, message) {
+                    const statusDiv = $('#status');
+
+                    statusDiv
+                        .removeClass('d-none alert-success alert-danger')
+                        .addClass(`alert-${type}`)
+                        .text(message)
+                        .fadeIn();
+
+                    setTimeout(() => statusDiv.fadeOut(), 5000);
+                }
+                $.ajax({
+                    url: 'http://localhost:3000/api/v1/Resources/', // Target URL
+                    type: 'POST', // HTTP method
+                    data: formData, // Data to send
+                    processData: false, // Prevent jQuery from converting the data into query string
+                    contentType: false, // Prevent jQuery from setting content-type header
+                    enctype: 'multipart/form-data', // Ensure enctype is correct
+
+                    success: function (response) {
+                        $('#gallery').append(response)
+                        updateStatus('success', `Created successfully`);
+                        $('#uploadForm')[0].reset();
+                        incrementText("total-items");
+                    },
+                    error: function (xhr, status, error) {
+                        updateStatus('danger', `Failed to add`);
+                        $('#uploadForm')[0].reset();
+                    }
+                });
+            });
+
+            $(document).on('click', '.page-btn', function () {
+                const page = $(this).data('page');
+                updateUrl(page); // Update the URL with the new page
+                fetchLocalPage(page); // Fetch data for the selected page
+            });
+        });
+
+    </script>
+}

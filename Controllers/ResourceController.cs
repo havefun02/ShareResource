@@ -9,6 +9,7 @@ using AutoMapper;
 using System.Security.Claims;
 using ShareResource.Models.ViewModels;
 using ShareResource.Decorators;
+using CRUDFramework.Cores;
 
 
 namespace ShareResource.Controllers
@@ -16,20 +17,22 @@ namespace ShareResource.Controllers
     public class ResourceController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IResource<Img> _service;
+        private readonly IResourceMod<Img> _service;
+        private readonly IResourceAccess<Img> _accessService;
+        private readonly IUserService<User> _userService;
+
         private readonly string _imageFolderPath;
-
-
-        public ResourceController(IResource<Img> service, IMapper mapper,IConfiguration configuration)
+        public ResourceController(IResourceMod<Img> service, IResourceAccess<Img> accessService, IMapper mapper, IConfiguration configuration, IUserService<User> userService)
         {
+            _accessService=accessService;
+            _userService = userService;
             _service = service;
             _imageFolderPath = configuration.GetValue<string>("ImageStorage:ImageFolderPath") ?? string.Empty;
             _mapper = mapper;
         }
-
-        [HttpGet]
         [Authorize]
-        public async Task<IActionResult> Main()
+        [HttpGet("resources/profile")]
+        public async Task<IActionResult> Profile([FromQuery] int page = 1)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             var userId = userIdClaim?.Value;
@@ -38,11 +41,114 @@ namespace ShareResource.Controllers
                 TempData["Error"] = "User not found. Please log in.";
                 return Forbid("You are not allowed to access page");
             }
-            var resources = await _service.GetDetailAllResource(userId);
-            var resourceViewModel = _mapper.Map<List<ImgResult>>(resources);
-            //var imgDto = new ImgDto();
-            //var model = Tuple.Create(resourceViewModel.AsEnumerable(), imgDto);
-            return View(resourceViewModel);
+            if (page <= 0)
+            {
+                var userProfile = await _userService.GetUserProfile(userId);
+                var userViewModel = _mapper.Map<UserViewModel>(userProfile);
+                var mainView = new MainPageViewModel { Imgs = null, User = userViewModel, Pagination = null };
+                return View(mainView);
+            }
+            else
+            {
+                OffsetPaginationParams offsetParams = new OffsetPaginationParams();
+                offsetParams.offset = (page - 1) * offsetParams.limit;
+                var userResources = await _accessService.GetUserResources(offsetParams, userId) as OffsetPaginationResult<Img>;
+                var resourceViewModel = _mapper.Map<List<ImgResultViewModel>>(userResources!.items);
+                var userProfile = await _userService.GetUserProfile(userId);
+                var userViewModel = _mapper.Map<UserViewModel>(userProfile);
+                var paginationModel = new PaginationViewModel { limit = userResources.limit, offset = userResources.offset, currentPage = userResources.offset / userResources.limit + 1, total = userResources.totalItems };
+                var mainView = new MainPageViewModel { Imgs = resourceViewModel, User = userViewModel, Pagination = paginationModel };
+                return View(mainView);
+            }
+        }
+
+        [HttpGet("resources")]
+        public async Task<IActionResult> Main([FromQuery] int page = 1)
+        {
+            if (page <= 0)
+            {
+                var mainView = new MainPageViewModel { Imgs = null, User = null, Pagination = null };
+                return View(mainView);
+            }
+            else
+            {
+                OffsetPaginationParams offsetParams = new OffsetPaginationParams();
+                offsetParams.offset = (page - 1) * offsetParams.limit;
+                var resources = await _accessService.GetSampleResource(offsetParams) as OffsetPaginationResult<Img>;
+                var resourceViewModel = _mapper.Map<List<ImgResultViewModel>>(resources!.items);
+                var paginationModel = new PaginationViewModel { limit = resources.limit, offset = resources.offset, currentPage = resources.offset / resources.limit + 1, total = resources.totalItems };
+                var mainView = new MainPageViewModel { Imgs = resourceViewModel, User = null, Pagination = paginationModel };
+                return View(mainView);
+            }
+        }
+        [HttpGet("api/v1/users/resources")]
+        [Authorize]
+        public async Task<IActionResult> GetUserData([FromQuery] int page)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = userIdClaim?.Value;
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                TempData["Error"] = "User not found. Please log in.";
+                return Forbid("You are not allowed to access page");
+            }
+            if (page <= 0)
+            {
+                return BadRequest("Invalid request");
+            }
+            else
+            {
+                OffsetPaginationParams offsetParams = new OffsetPaginationParams();
+                offsetParams.offset = (page - 1) * offsetParams.limit;
+                var resources = await _accessService.GetUserResources(offsetParams,userId) as OffsetPaginationResult<Img>;
+                var resourceViewModel = _mapper.Map<List<ImgResultViewModel>>(resources!.items);
+                return new JsonResult(resourceViewModel);
+            }
+        }
+
+        [HttpGet("api/v1/resources")]
+        public async Task<IActionResult> GetAppData([FromQuery] int page)
+        {
+            if (page <= 0)
+            {
+                return BadRequest("Invalid request");
+            }
+            else
+            {
+                OffsetPaginationParams offsetParams = new OffsetPaginationParams();
+                offsetParams.offset = (page - 1) * offsetParams.limit;
+                var resources = await _accessService.GetSampleResource(offsetParams) as OffsetPaginationResult<Img>;
+                var resourceViewModel = _mapper.Map<List<ImgResultViewModel>>(resources!.items);
+                return new JsonResult(resourceViewModel);
+            }
+        }
+        [HttpGet]
+        [Route("users/{userId}/resources")]
+        public async Task<IActionResult> GetUserProfile(string userId, int page)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                TempData["Error"] = "User not found.";
+                return BadRequest("You are not allowed to access page");
+            }
+            OffsetPaginationParams offsetParams = new OffsetPaginationParams();
+            if (offsetParams?.offset == null)
+            {
+                offsetParams!.offset = 1;
+            }
+            else
+            {
+                offsetParams.offset = page * offsetParams.limit;
+            }
+
+            var userResources = await _accessService.GetPublicUserResources(offsetParams,userId) as OffsetPaginationResult<Img>;
+            var resourceViewModel = _mapper.Map<List<ImgResultViewModel>>(userResources!.items);
+            var userProfile = await _userService.GetUserProfile(userId);
+            var userViewModel = _mapper.Map<UserViewModel>(userProfile);
+            var paginationModel = new PaginationViewModel { limit = userResources.limit, offset = userResources.offset, currentPage = userResources.offset / userResources.limit + 1, total = userResources.totalItems };
+
+            var mainView = new MainPageViewModel { Imgs = resourceViewModel, User = userViewModel ,Pagination= paginationModel };
+            return View("UserProfile", mainView);
         }
 
         /// <summary>
@@ -54,14 +160,13 @@ namespace ShareResource.Controllers
         ///   
         [HttpPost]
         [Authorize]
+        [Route("api/v1/resources")]
         [FileValidator]
         public async Task<IActionResult> Upload([FromForm] ImgDto fileMeta)
         {
-            // Get user ID from claims
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             var userId = userIdClaim?.Value;
 
-            // Check if user ID is valid
             if (string.IsNullOrWhiteSpace(userId))
             {
                 TempData["Error"] = "User not found. Please log in.";
@@ -70,9 +175,8 @@ namespace ShareResource.Controllers
 
             var fileExtension = Path.GetExtension(fileMeta.file!.FileName).ToLowerInvariant();
 
-            
 
-            // Check model state validity
+
             if (!ModelState.IsValid)
             {
                 TempData["Error"] = "Invalid model data.";
@@ -81,19 +185,19 @@ namespace ShareResource.Controllers
 
             try
             {
-                var folderPath = _imageFolderPath+"/"+ userId; // You might want to use a unique filename
-                Directory.CreateDirectory(("wwwroot"+ folderPath));
-                var filePath=folderPath +"/"+ Guid.NewGuid().ToString() + fileMeta.FileName + fileExtension;
-                using (var stream = new FileStream("wwwroot"+filePath, FileMode.Create))
+                var folderPath = _imageFolderPath + "/" + userId; // You might want to use a unique filename
+                Directory.CreateDirectory("wwwroot" + folderPath);
+                var filePath = folderPath + "/" + Guid.NewGuid().ToString() + fileMeta.FileName + fileExtension;
+                using (var stream = new FileStream("wwwroot" + filePath, FileMode.Create))
                 {
                     await fileMeta.file.CopyToAsync(stream); // Save the file to the server
                 }
                 var imgToUpload = _mapper.Map<Img>(fileMeta);
                 imgToUpload.FileUrl = filePath;
                 var uploadedResource = await _service.UploadResource(imgToUpload, userId);
-                var displayData=_mapper.Map<ImgResult>(uploadedResource);
+                var displayData = _mapper.Map<ImgResultViewModel>(uploadedResource);
                 TempData["Success"] = "File uploaded successfully!";
-                return PartialView("_ImgItem",displayData); // You can redirect to another action if needed
+                return PartialView("_ImgItem", displayData); // You can redirect to another action if needed
 
             }
             catch (Exception ex)
@@ -110,8 +214,8 @@ namespace ShareResource.Controllers
         /// <param name="resourceId">The ID of the resource to update.</param>
         /// <param name="resource">The updated image resource.</param>
         /// <returns>The updated image resource.</returns>
-        [HttpPut("{resourceId}")]
-        [Authorize()] // Adjust the policy as needed
+        [HttpPut("api/v1/resources/{resourceId}")]
+        [Authorize] // Adjust the policy as needed
         public async Task<IActionResult> EditResource(string resourceId, [FromBody] UpdateImgDto resource)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -120,7 +224,6 @@ namespace ShareResource.Controllers
             {
                 return BadRequest("User ID cannot be null or empty.");
             }
-
             if (!ModelState.IsValid)
             {
                 return BadRequest("Invalid resource.");
@@ -129,6 +232,7 @@ namespace ShareResource.Controllers
             try
             {
                 var imgToUpdate = _mapper.Map<Img>(resource);
+                imgToUpdate.ImgId = resourceId;
                 var updatedResource = await _service.EditResource(imgToUpdate, userId);
                 return Ok(updatedResource);
             }
@@ -143,26 +247,20 @@ namespace ShareResource.Controllers
         /// </summary>
         /// <param name="resourceId">The ID of the resource to retrieve.</param>
         /// <returns>The image resource.</returns>
-        [HttpGet("{resourceId}")]
-        [Authorize] // Adjust the policy as needed
+        [HttpGet("resources/{resourceId}")]
         public async Task<IActionResult> GetDetailResourceById(string resourceId)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            var userId = userIdClaim?.Value;
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                return BadRequest("User ID cannot be null or empty.");
-            }
-
             try
             {
-                
-                var resourceResult = await _service.GetDetailResourceById(userId, resourceId);
+
+                var resourceResult = await _accessService.GetResourceById(resourceId);
                 if (resourceResult == null)
                 {
                     return NotFound("Resource not found.");
                 }
-                return Ok(resourceResult);
+                var displayData = _mapper.Map<ImgResultViewModel>(resourceResult);
+
+                return View("SingleItem", displayData);
 
             }
             catch (Exception ex)
@@ -171,14 +269,13 @@ namespace ShareResource.Controllers
             }
         }
 
-
         /// <summary>
         /// Delete a specific image resource by ID.
         /// </summary>
         /// <param name="resourceId">The ID of the resource to delete.</param>
         /// <returns>Result of the delete operation.</returns>
-        [HttpDelete("{resourceId}")]
-        [Authorize()] // Only admin can delete
+        [HttpDelete("api/v1/resources/{resourceId}")]
+        [Authorize] // Only admin can delete
         public async Task<IActionResult> DeleteResource(string resourceId)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -196,7 +293,7 @@ namespace ShareResource.Controllers
                     return NotFound("Resource not found or cannot be deleted.");
                 }
 
-                return NoContent(); // Successful deletion
+                return Ok("Deleted"); // Successful deletion
             }
             catch (Exception ex)
             {

@@ -4,15 +4,20 @@ using ShareResource.Interfaces;
 using ShareResource.Exceptions;
 using ShareResource.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using CRUDFramework.Cores;
 
 namespace ShareResource.Services
 {
-    public class ResourceService : IResource<Img>
+    public class ResourceModService : IResourceMod<Img>
     {
         private readonly IRepository<Img, AppDbContext> _repository;
+        private readonly IPaginationService<Img> _paginationService;
 
-        public ResourceService(IRepository<Img, AppDbContext> repository)
+
+
+        public ResourceModService(IRepository<Img, AppDbContext> repository, IPaginationService<Img> paginationService)
         {
+            _paginationService = paginationService;
             _repository = repository;
         }
 
@@ -46,38 +51,17 @@ namespace ShareResource.Services
             }
 
             existingResource.FileName = resource.FileName;
-            existingResource.FileUrl = resource.FileUrl;
-            existingResource.ContentType = resource.ContentType;
-            existingResource.FileSize = resource.FileSize;
-            existingResource.Description = resource.Description;
-            existingResource.IsPrivate = resource.IsPrivate;
+            //existingResource.FileUrl = resource.FileUrl;
+            //existingResource.ContentType = resource.ContentType;
+            //existingResource.FileSize = resource.FileSize;
+            //existingResource.Description = resource.Description;
+            //existingResource.IsPrivate = resource.IsPrivate;
 
             var updateResult=await _repository.Update(existingResource);
             return updateResult;
         }
 
-        public async Task<ICollection<Img>> GetDetailAllResource(string userId)
-        {
-            var imgContext = _repository.GetDbSet();
-            var resources = await imgContext.Where(r=>r.UserId==userId).ToListAsync();
-
-            return resources;
-        }
-
-        public async Task<Img> GetDetailResourceById(string userId, string resourceId)
-        {
-            var resource = await _repository.FindOneById(resourceId);
-            if (resource == null)
-            {
-                throw new ArgumentException("Resource not found");
-            }
-
-            if (resource.IsPrivate && resource.UserId != userId)
-            {
-                throw new UnauthorizedAccessException("User not authorized to access this resource");
-            }
-            return resource;
-        }
+       
 
         public async Task<Img> UploadResource(Img resource, string userId)
         {
@@ -92,5 +76,7 @@ namespace ShareResource.Services
                 throw new InternalException("Save img failed due to", ex);
             }
         }
+
+
     }
 }

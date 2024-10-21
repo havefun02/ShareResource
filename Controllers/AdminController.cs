@@ -10,12 +10,12 @@ namespace ShareResource.Controllers
 {
     [ApiController]
     [Route("/api/v1/admins")]
-    public class AdminController:ControllerBase
+    public class AdminController : ControllerBase
     {
         private readonly IAdminService<User> _adminService;
         private readonly IMapper _mapper;
 
-        public AdminController(IAdminService<User> adminService,IMapper mapper)
+        public AdminController(IAdminService<User> adminService, IMapper mapper)
         {
             _adminService = adminService;
             _mapper = mapper;

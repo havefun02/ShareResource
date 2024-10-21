@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShareResource.Database;
 
@@ -10,9 +11,11 @@ using ShareResource.Database;
 namespace ShareResource.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241016082734_AddUserIcon")]
+    partial class AddUserIcon
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -271,8 +274,8 @@ namespace ShareResource.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
-                    b.Property<byte[]>("UserIcon")
-                        .HasColumnType("longblob");
+                    b.Property<byte?>("UserIcon")
+                        .HasColumnType("tinyint unsigned");
 
                     b.Property<string>("UserName")
                         .IsRequired()
@@ -298,19 +301,19 @@ namespace ShareResource.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = "6dcdd4f7-5982-4cac-be6c-789c16713220",
+                            UserId = "3dca01a7-bc03-4bce-96cb-b9df7a8bfabd",
                             UserEmail = "Admin@gmail.com",
                             UserName = "Lapphan",
-                            UserPassword = "AQAAAAIAAYagAAAAEPdb2Kds9zaV+lZAgLts+BsDA2ckBhZCjvyE6o9b2DJxaGXrtCsp6CC5m1GSPvyzrQ==",
+                            UserPassword = "AQAAAAIAAYagAAAAEBFQhPJmJfVOTl1pNYmlb9mQSMTnCr7zVZDPWpaW9GtuA6re1Fmq3+uwbTY2dgW04w==",
                             UserPhone = "123456789",
                             UserRoleId = "Admin"
                         },
                         new
                         {
-                            UserId = "9de61b5f-3e9a-4d12-84c1-4201918aa7ca",
+                            UserId = "c215753d-8be5-4da5-bc87-e14ffdfcce3f",
                             UserEmail = "Owner@gmail.com",
                             UserName = "Lapphan",
-                            UserPassword = "AQAAAAIAAYagAAAAEDxsM2qbk/gD7VbJLFYJotV5P3AWaieGJ0QerztVWfKn/QCTIOr7fvgciYKhOogPRQ==",
+                            UserPassword = "AQAAAAIAAYagAAAAEHtco3ykntSp7yyjrz5GdNSDWNrqKKQwT+Dim33JIBDR2T8Hc+0N7xCtP+ObfW3WPw==",
                             UserPhone = "123456789",
                             UserRoleId = "Owner"
                         });

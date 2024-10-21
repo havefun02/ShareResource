@@ -1,0 +1,27 @@
+﻿@model ICollection<ShareResource.Models.ViewModels.ImgResultViewModel>
+
+<div class="gallery-container">
+<div class="row" id="gallery"> 
+    @if (Model!=null){
+        @foreach (var image in Model)
+        {
+            @await Html.PartialAsync("_ImgItem",image);
+            }
+        }
+        else
+        {
+            <div>No item found</div>
+        }
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $(document).on('click', '.clickable-items', function () {
+            const imgId = $(this).data('imgid');
+            const url = '/resources/' + imgId; // Use string concatenation
+            window.location.href = url;
+        });
+     
+    });
+</script>
+

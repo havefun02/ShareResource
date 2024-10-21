@@ -10,14 +10,14 @@ namespace ShareResource.Controllers
 {
     [ApiController]
     [Route("api/v1/admins")]
-    public class RoleController:ControllerBase
+    public class RoleController : ControllerBase
     {
         private readonly IRoleService<Role> _roleService;
         private readonly IMapper _mapper;
-        public RoleController(IRoleService<Role> roleService,IMapper mapper)
+        public RoleController(IRoleService<Role> roleService, IMapper mapper)
         {
             _roleService = roleService;
-            _mapper = mapper;   
+            _mapper = mapper;
         }
 
         [Authorize]

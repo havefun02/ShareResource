@@ -1,0 +1,23 @@
+﻿@model ShareResource.Models.ViewModels.ImgResultViewModel
+
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Image " +Model.ImgId;
+}
+
+<div class="main-page">
+
+<div class="image-container">
+    <div class="image-details">
+        <h5>Image name: @Model.FileName</h5>
+        <p>Uploaded on: @Model.UploadDate.ToString("dd MMM yyyy")</p>
+    </div>
+    <img src="@Url.Content(Model.FileUrl)" alt="@Model.FileName" />
+    <div class="author-details">
+            <p>Author: <a href="">@Model.AuthorName</a></p>
+        <p>Email: <a href="mailto:@Model.AuthorEmail">@Model.AuthorEmail</a></p>
+    </div>
+</div>
+</div>
+

@@ -30,7 +30,7 @@ namespace ShareResource.Policies
         }
 
 
-        bool CanBeIgnorable(HttpContext context)
+        bool CanBeIgnored(HttpContext context)
         {
             var endpoint = context.GetEndpoint();
             if (endpoint == null) return false;
@@ -38,9 +38,10 @@ namespace ShareResource.Policies
             var controllerActionDescriptor = endpoint.Metadata
                 .GetMetadata<ControllerActionDescriptor>();
 
-            return controllerActionDescriptor?.MethodInfo
+            var result= controllerActionDescriptor?.MethodInfo
                 .GetCustomAttributes(typeof(AuthorizeAttribute), true)
                 .Any() ?? false;
+            return result;
         }
         private async Task<AuthenticateResult> HandleExpiredTokenAsync()
         {
@@ -90,7 +91,7 @@ namespace ShareResource.Policies
         }
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            if (CanBeIgnorable(Context))
+            if (CanBeIgnored(Context))
             {
                 var token = Context.Request.Cookies["accessToken"];
                 if (string.IsNullOrEmpty(token))

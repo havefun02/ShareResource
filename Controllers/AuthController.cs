@@ -11,13 +11,14 @@ namespace ShareResource.Controllers
 {
     [ApiController]
     [Route("api/v1/auths")]
-    public class AuthController:ControllerBase
+    public class AuthController : ControllerBase
     {
 
-        private readonly IAuthService<User,Token> _authService;
+        private readonly IAuthService<User, Token> _authService;
         private readonly IMapper _mapper;
 
-        public AuthController(IAuthService<User, Token> authService,IMapper mapper) {
+        public AuthController(IAuthService<User, Token> authService, IMapper mapper)
+        {
             _mapper = mapper;
             _authService = authService;
         }
@@ -42,7 +43,8 @@ namespace ShareResource.Controllers
                 });
                 return Ok();
             }
-            catch (Exception ex) { 
+            catch (Exception ex)
+            {
                 return BadRequest(ex.Message);
             }
         }
@@ -52,8 +54,8 @@ namespace ShareResource.Controllers
 
             try
             {
-                var registerResult=await this._authService.Register(registerDto);
-                var returnResult=_mapper.Map<UserResultDto>(registerResult);
+                var registerResult = await _authService.Register(registerDto);
+                var returnResult = _mapper.Map<UserResultDto>(registerResult);
                 return Ok(returnResult);
 
             }
@@ -74,11 +76,12 @@ namespace ShareResource.Controllers
                 {
                     return NotFound("User ID not found in claims.");
                 }
-                var updatePasswordResult =await this._authService.UpdatePassword(updatePasswordDto, userId);
+                var updatePasswordResult = await _authService.UpdatePassword(updatePasswordDto, userId);
                 if (updatePasswordResult) return Ok();
                 else return BadRequest();
             }
-            catch (Exception ex){
+            catch (Exception ex)
+            {
                 return BadRequest(ex.Message);
             }
         }
@@ -87,7 +90,7 @@ namespace ShareResource.Controllers
         {
             try
             {
-                var changePasswordResult=await _authService.ChangePassword(changePasswordDto);
+                var changePasswordResult = await _authService.ChangePassword(changePasswordDto);
                 if (changePasswordResult) return Ok();
                 else return BadRequest();
             }
@@ -108,16 +111,18 @@ namespace ShareResource.Controllers
                 {
                     return NotFound("User ID not found in claims.");
                 }
-                var logoutResult = await this._authService.Logout(userId);
-                if (logoutResult) {
+                var logoutResult = await _authService.Logout(userId);
+                if (logoutResult)
+                {
                     HttpContext.Response.Cookies.Delete("accessToken");
                     HttpContext.Response.Cookies.Delete("refreshToken");
                     return Ok();
                 }
                 else return BadRequest();
             }
-            catch(Exception ex) { 
-                return BadRequest(ex.Message); 
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
         }
 
