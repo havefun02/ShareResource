@@ -9,12 +9,11 @@
     <div id="status" class="alert d-none" role="alert"></div>
     <div class="user-section">
         <div class="flex-center col-6 form-container">
-            <form id="uploadForm" enctype="multipart/form-data">
+            <form id="uploadForm" enctype="multipart/form-data" >
                 <div class="form-group">
                     <label for="fileName">File Name</label>
                     <input type="text" class="form-control" id="fileName" name="FileName" required />
                 </div>
-
                 <div class="form-group">
                     <label for="file">Select File</label>
                     <input type="file" class="form-control-file" id="file" name="file" accept=".png, .jpg, .jpeg" />
@@ -158,7 +157,6 @@
                 const formData = new FormData(this);
                 function updateStatus(type, message) {
                     const statusDiv = $('#status');
-
                     statusDiv
                         .removeClass('d-none alert-success alert-danger')
                         .addClass(`alert-${type}`)

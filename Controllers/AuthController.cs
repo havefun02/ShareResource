@@ -48,7 +48,7 @@ namespace ShareResource.Controllers
                     return Ok(new { RedirectUrl = returnUrl });
 
                 }
-                return Ok(new { RedirectUrl = "/" });
+                return Ok(new { RedirectUrl = "/resources/profile" });
             }
             catch (Exception ex)
             {
@@ -131,7 +131,7 @@ namespace ShareResource.Controllers
                 {
                     HttpContext.Response.Cookies.Delete("accessToken");
                     HttpContext.Response.Cookies.Delete("refreshToken");
-                    return Ok();
+                    return Ok(new {redirectUrl="/account/login"});
                 }
                 else return BadRequest();
             }
