@@ -134,6 +134,11 @@
     background-color: #007bff;
     color: white;
 }
+.account-group{
+    position:absolute;
+    right:0;
+    margin-right:20px;
+}
 
 /* Responsive design for smaller screens */
 @media (max-width: 600px) {

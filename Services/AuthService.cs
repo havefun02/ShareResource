@@ -127,7 +127,7 @@ namespace ShareResource.Services
             }
         }
 
-        public async Task<User> Register(RegisterDto user)
+        public async Task<bool> Register(RegisterDto user)
         {
             try
             {
@@ -156,12 +156,14 @@ namespace ShareResource.Services
                 newUser.UserPassword = passwordHasher.HashPassword(newUser, user.Password);
 
                 var userCreated = await _userRepository.CreateAsync(newUser);
-                if (userCreated == null) throw new InvalidOperationException("Cant not create user");
-                var getDataResult = await userContext.Include(u => u.UserRole).ThenInclude(r => r!.RolePermissions).SingleOrDefaultAsync(u => u.UserId == userCreated.UserId);
-                if (getDataResult == null) throw new InvalidOperationException("Internal error finding user data");
-                return getDataResult;
+                if (userCreated != null)
+                return true;
+
+                return false;
             }
-            catch { throw; }
+            catch(Exception) {
+                return false;
+            }
         }
 
         public async Task<bool> UpdatePassword(UpdatePasswordDto dto,string userId)

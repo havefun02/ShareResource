@@ -89,6 +89,21 @@ namespace ShareResource.Policies
                 return AuthenticateResult.Fail($"Error refreshing token: {ex.Message}");
             }
         }
+        protected override Task HandleChallengeAsync(AuthenticationProperties properties)
+        {
+            var returnUrl = Context.Request.Path + Context.Request.QueryString;
+            if (returnUrl != null)
+            {
+                Context.Response.Redirect($"/account/login?returnUrl={returnUrl}");
+            }
+            return Task.CompletedTask;
+        }
+        protected override Task HandleForbiddenAsync(AuthenticationProperties properties)
+        {
+            // Handle forbidden access
+            Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        }
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             if (CanBeIgnored(Context))

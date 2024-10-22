@@ -4,11 +4,19 @@
         <img src="@Url.Content(@Model.FileUrl)" alt="@Model.FileName" class="card-img-top" />
 
         <div class="card-body">
-            <h5 class="card-title">@Model.FileName</h5>
-            <p class="card-text">Uploaded on: @Model.UploadDate.ToString("dd MMM yyyy")</p>
-            <button class="btn btn-danger btn-delete mt-2" data-imgid="@Model.ImgId">
-                Delete
-            </button>
+            
+            <p class="card-text">
+                <small class="text-muted">
+                    File Name: @Model.FileName <br />
+                    Uploaded on: @Model.UploadDate.ToString("dd MMM yyyy")
+                </small>
+            </p>
+            <p class="card-text">
+                <small class="text-muted">
+                    Author: @Model.AuthorName <br />
+                    Email: <a href="mailto:@Model.AuthorEmail">@Model.AuthorEmail</a>
+                </small>
+            </p>
         </div>
     </div>
 </div>

@@ -29,6 +29,7 @@ namespace ShareResource.Controllers
             try
             {
                 var (access, refresh) = await _authService.Login(loginDto);
+                if (access== null ||refresh==null) return NotFound("Please login again!");
                 HttpContext.Response.Cookies.Append("accessToken", access, new CookieOptions
                 {
                     HttpOnly = true,
@@ -41,7 +42,13 @@ namespace ShareResource.Controllers
                     Secure = true,
                     SameSite = SameSiteMode.Strict,
                 });
-                return Ok();
+                var returnUrl = Request.Query["returnUrl"].ToString();
+                if (!string.IsNullOrEmpty(returnUrl))
+                {
+                    return Ok(new { RedirectUrl = returnUrl });
+
+                }
+                return Ok(new { RedirectUrl = "/" });
             }
             catch (Exception ex)
             {
@@ -51,13 +58,21 @@ namespace ShareResource.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<UserResultDto>> Register([FromBody] RegisterDto registerDto)
         {
-
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Form data is not correct");
+            }
             try
             {
                 var registerResult = await _authService.Register(registerDto);
-                var returnResult = _mapper.Map<UserResultDto>(registerResult);
-                return Ok(returnResult);
-
+                if (registerResult)
+                {
+                    return Ok(new { RedirectUrl = "/account/login" });
+                }
+                else
+                {
+                    return BadRequest("Register failed");
+                }
             }
             catch (Exception ex)
             {
@@ -91,7 +106,7 @@ namespace ShareResource.Controllers
             try
             {
                 var changePasswordResult = await _authService.ChangePassword(changePasswordDto);
-                if (changePasswordResult) return Ok();
+                if (changePasswordResult) return Ok(new {redirectUrl="/account/login"});
                 else return BadRequest();
             }
             catch (Exception ex)

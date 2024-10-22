@@ -15,6 +15,7 @@ using ShareResource.Models;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication.Cookies;
 namespace ShareResource
 {
     public class Startup
@@ -60,6 +61,7 @@ namespace ShareResource
                 });
             });
             services.AddAuthentication("JWT-COOKIES-SCHEME").AddScheme<AuthenticationSchemeOptions, AppAuthenticationHandler>("JWT-COOKIES-SCHEME", null);
+            
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("OwnerOnly", policy =>

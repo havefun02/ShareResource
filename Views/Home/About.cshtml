@@ -1,0 +1,33 @@
+﻿@model ShareResource.Models.ViewModels.AboutViewModel
+@{
+    ViewData["Title"] = "About";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="container mt-5">
+    <h1 class="mb-4">About Us</h1>
+    <p>
+        Welcome to our platform! We aim to provide high-quality content and services that meet your needs.
+        Our mission is to offer seamless access to resources and ensure customer satisfaction at every step.
+    </p>
+
+    <h2 class="mt-5 mb-3">Contact Us</h2>
+    <p>If you have any questions or need support, feel free to reach out to us:</p>
+    <ul class="list-unstyled">
+        <li><strong>Email:</strong> <a href=@Model.Email>@Model.Email</a></li>
+        <li><strong>Phone:</strong> @Model.PhoneNumber</li>
+        <li><strong>Address:</strong> @Model.Address</li>
+    </ul>
+
+    <h3 class="mt-4">Follow Us</h3>
+    <ul class="list-inline">
+        <li class="list-inline-item">
+            <a href="https://twitter.com" target="_blank">Twitter</a>
+        </li>
+        <li class="list-inline-item">
+            <a href="https://facebook.com" target="_blank">Facebook</a>
+        </li>
+        <li class="list-inline-item">
+            <a href="https://instagram.com" target="_blank">Instagram</a>
+        </li>
+    </ul>
+</div>
