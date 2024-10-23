@@ -1,4 +1,6 @@
 ﻿$(document).ready(function () {
+
+
     $("#logoutForm").on("submit", function (event) {
         event.preventDefault();
 

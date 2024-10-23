@@ -34,6 +34,7 @@ namespace ShareResource.Controllers
         [HttpGet("resources/profile")]
         public async Task<IActionResult> Profile([FromQuery] int page = 1)
         {
+            Console.WriteLine(User.Identity.IsAuthenticated);
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             var userId = userIdClaim?.Value;
             if (string.IsNullOrWhiteSpace(userId))
@@ -61,7 +62,7 @@ namespace ShareResource.Controllers
                 return View(mainView);
             }
         }
-
+        [AllowAnonymous]
         [HttpGet("resources")]
         public async Task<IActionResult> Main([FromQuery] int page = 1)
         {
@@ -195,10 +196,7 @@ namespace ShareResource.Controllers
                 var imgToUpload = _mapper.Map<Img>(fileMeta);
                 imgToUpload.FileUrl = filePath;
                 var uploadedResource = await _service.UploadResource(imgToUpload, userId);
-                var displayData = _mapper.Map<ImgResultViewModel>(uploadedResource);
-                TempData["Success"] = "File uploaded successfully!";
-                return PartialView("_ImgItem", displayData); // You can redirect to another action if needed
-
+                return Ok(new {redirectUrl="/resources/profile" });
             }
             catch (Exception ex)
             {
@@ -234,7 +232,7 @@ namespace ShareResource.Controllers
                 var imgToUpdate = _mapper.Map<Img>(resource);
                 imgToUpdate.ImgId = resourceId;
                 var updatedResource = await _service.EditResource(imgToUpdate, userId);
-                return Ok(updatedResource);
+                return Ok(new {redirectUrl="/resources/profile" });
             }
             catch (Exception ex)
             {
@@ -293,7 +291,8 @@ namespace ShareResource.Controllers
                     return NotFound("Resource not found or cannot be deleted.");
                 }
 
-                return Ok("Deleted"); // Successful deletion
+                return Ok(new { redirectUrl = "/resources/profile" });
+
             }
             catch (Exception ex)
             {

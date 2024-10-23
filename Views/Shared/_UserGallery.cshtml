@@ -47,7 +47,7 @@
     function resetModalState() {
         selectedImgId = null; // Clear the selected image ID
     }
-    $('.btn-delete').on('click', function () {
+    $(document).on('click', '.btn-delete', function () {
         selectedImgId = $(this).data('imgid');
         $('#deleteModal').modal('show');
     });

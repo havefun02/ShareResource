@@ -46,7 +46,7 @@ namespace ShareResource
             services.AddScoped<IResourceMod<Img>, ResourceModService>();
             services.AddScoped<IResourceAccess<Img>, ResourceAccessService>();
             services.AddScoped<IPaginationService<Img>, OffsetPaginationService<Img>>();
-
+            services.AddHttpContextAccessor();
 
             services.AddSingleton<IJwtService<User>,JwtService>();
 
