@@ -36,6 +36,13 @@ namespace ShareResource
             //{
             //    options.MultipartBodyLengthLimit = 1; // Set limit to 100 MB
             //});
+            services.AddWebOptimizer(pipeline =>
+            {
+                pipeline.AddCssBundle("css/bundle.css", "css/main.css");
+                pipeline.AddJavaScriptBundle("js/bundle.js", "js/site.js");
+                pipeline.MinifyCssFiles();
+                pipeline.MinifyJsFiles();
+            });
             services.AddSingleton<IMapper>(provider =>
             {
                 var configuration = new MapperConfiguration(cfg =>
@@ -96,6 +103,7 @@ namespace ShareResource
 
             app.UseCors("AllowAll");
             app.UseDefaultFiles();
+            app.UseWebOptimizer();
             app.UseStaticFiles();
             app.UseRouting();
             app.UseMiddleware<LoggerMiddleware>();
