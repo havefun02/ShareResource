@@ -10,6 +10,7 @@ using System.Security.Claims;
 using ShareResource.Models.ViewModels;
 using ShareResource.Decorators;
 using CRUDFramework.Cores;
+using Microsoft.EntityFrameworkCore.Query;
 
 
 namespace ShareResource.Controllers
@@ -177,7 +178,6 @@ namespace ShareResource.Controllers
             var fileExtension = Path.GetExtension(fileMeta.file!.FileName).ToLowerInvariant();
 
 
-
             if (!ModelState.IsValid)
             {
                 TempData["Error"] = "Invalid model data.";
@@ -203,6 +203,46 @@ namespace ShareResource.Controllers
                 TempData["Error"] = $"Error uploading file: {ex.Message}";
                 return BadRequest();
             }
+        }
+        [HttpPost]
+        [Authorize]
+        [Route("api/v1/resources/videos")]
+        public async Task<IActionResult> UploadChunk([FromForm] VidDto dto)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = userIdClaim?.Value;
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                TempData["Error"] = "User not found. Please log in.";
+                return BadRequest(TempData["Error"]);
+            }
+            if (!ModelState.IsValid)
+            {
+                Console.WriteLine("Invalid model or content range");
+
+                TempData["Error"] = "Invalid model data.";
+                return BadRequest(TempData["Error"]);
+            }
+
+            if (dto.source == null)
+            {
+                Console.WriteLine("Invalid chunk or content range");
+
+                return BadRequest("Invalid chunk or content range");
+            }
+
+            var folderPath = _imageFolderPath + "/" + userId+"/videos"; // You might want to use a unique filename
+
+            Directory.CreateDirectory("wwwroot/" + folderPath);
+            var filePath = "wwwroot" + folderPath + "/" + dto.FileName + ".mp4";
+
+            using (var stream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Write))
+            {
+                stream.Seek(dto.start, SeekOrigin.Begin);
+                await dto.source.CopyToAsync(stream);
+            }
+            return Ok("Chunk uploaded");
         }
 
 

@@ -16,6 +16,7 @@ using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http.Features;
 namespace ShareResource
 {
     public class Startup
@@ -31,6 +32,10 @@ namespace ShareResource
 
             services.AddDbContext<AppDbContext>();
             services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
+            //services.Configure<FormOptions>(options =>
+            //{
+            //    options.MultipartBodyLengthLimit = 1; // Set limit to 100 MB
+            //});
             services.AddSingleton<IMapper>(provider =>
             {
                 var configuration = new MapperConfiguration(cfg =>
@@ -94,8 +99,6 @@ namespace ShareResource
             app.UseStaticFiles();
             app.UseRouting();
             app.UseMiddleware<LoggerMiddleware>();
-            app.UseMiddleware<FileValidationMiddleware>();
-
             app.UseAuthentication();
             app.UseAuthorization();
 

@@ -74,26 +74,26 @@ namespace ShareResource.Database
                     .HasForeignKey<Token>(t=>t.UserId) 
                     .OnDelete(DeleteBehavior.Cascade); // Configure delete behavior
                 entity.HasOne(u => u.UserToken).WithOne(t => t.User).HasForeignKey<Token>(t => t.UserId);
-                var user = new User
-                {
-                    UserId=Guid.NewGuid().ToString(),
-                    UserEmail = "Admin@gmail.com",
-                    UserName = "Lapphan",
-                    UserPhone = "123456789",
-                    UserRoleId = "Admin",
-                };
-                var ownerUser = new User
-                {
-                    UserId = Guid.NewGuid().ToString(),
-                    UserEmail = "Owner@gmail.com",
-                    UserName = "Lapphan",
-                    UserPhone = "123456789",
-                    UserRoleId = "Owner",
-                };
-                user.UserPassword = new PasswordHasher<User>().HashPassword(user,"adminpassword");
-                ownerUser.UserPassword = new PasswordHasher<User>().HashPassword(ownerUser, "adminpassword");
+                //var user = new User
+                //{
+                //    UserId=Guid.NewGuid().ToString(),
+                //    UserEmail = "Admin@gmail.com",
+                //    UserName = "Lapphan",
+                //    UserPhone = "123456789",
+                //    UserRoleId = "Admin",
+                //};
+                //var ownerUser = new User
+                //{
+                //    UserId = Guid.NewGuid().ToString(),
+                //    UserEmail = "Owner@gmail.com",
+                //    UserName = "Lapphan",
+                //    UserPhone = "123456789",
+                //    UserRoleId = "Owner",
+                //};
+                //user.UserPassword = new PasswordHasher<User>().HashPassword(user,"adminpassword");
+                //ownerUser.UserPassword = new PasswordHasher<User>().HashPassword(ownerUser, "adminpassword");
 
-                entity.HasData([user, ownerUser]);
+                //entity.HasData([user, ownerUser]);
             });
             modelBuilder.Entity<Role>(entity =>
             {
@@ -174,32 +174,32 @@ namespace ShareResource.Database
                 entity.HasOne(it => it.Tags).WithMany(i => i.ImgTags).HasForeignKey(it => it.TagId);
 
             });
-            var permisisons = new List<Permission>();
-            permisisons.Add(new Permission { PermissionId = "Read",PermissionName="Read" });
-            permisisons.Add(new Permission { PermissionId = "Write", PermissionName = "Write" });
-            permisisons.Add(new Permission { PermissionId = "Delete", PermissionName = "Delete" });
-            permisisons.Add(new Permission { PermissionId = "Execute", PermissionName = "Execute" });
-            permisisons.Add(new Permission { PermissionId = "FullPermissions", PermissionName = "FullPermissions" });
-            modelBuilder.Entity<Permission>().HasData(permisisons);
+            //var permisisons = new List<Permission>();
+            //permisisons.Add(new Permission { PermissionId = "Read",PermissionName="Read" });
+            //permisisons.Add(new Permission { PermissionId = "Write", PermissionName = "Write" });
+            //permisisons.Add(new Permission { PermissionId = "Delete", PermissionName = "Delete" });
+            //permisisons.Add(new Permission { PermissionId = "Execute", PermissionName = "Execute" });
+            //permisisons.Add(new Permission { PermissionId = "FullPermissions", PermissionName = "FullPermissions" });
+            //modelBuilder.Entity<Permission>().HasData(permisisons);
 
-            var roles = new List<Role>();
-            roles.Add(new Role { RoleId = "Admin", RoleName = "Admin" });
-            roles.Add(new Role { RoleId = "Owner", RoleName = "Owner" });
-            roles.Add(new Role { RoleId = "Guest", RoleName = "Guest" });
-            roles.Add(new Role { RoleId = "User", RoleName = "User" });
+            //var roles = new List<Role>();
+            //roles.Add(new Role { RoleId = "Admin", RoleName = "Admin" });
+            //roles.Add(new Role { RoleId = "Owner", RoleName = "Owner" });
+            //roles.Add(new Role { RoleId = "Guest", RoleName = "Guest" });
+            //roles.Add(new Role { RoleId = "User", RoleName = "User" });
 
-            modelBuilder.Entity<Role>().HasData(roles);
+            //modelBuilder.Entity<Role>().HasData(roles);
             
-            var rolePermissions = new List<RolePermission>();
-            rolePermissions.Add(new RolePermission { RoleId = "Admin", PermissionId = "Read" });
-            rolePermissions.Add(new RolePermission { RoleId = "Admin", PermissionId = "Write" });
-            rolePermissions.Add(new RolePermission { RoleId = "Admin", PermissionId = "Delete" });
+            //var rolePermissions = new List<RolePermission>();
+            //rolePermissions.Add(new RolePermission { RoleId = "Admin", PermissionId = "Read" });
+            //rolePermissions.Add(new RolePermission { RoleId = "Admin", PermissionId = "Write" });
+            //rolePermissions.Add(new RolePermission { RoleId = "Admin", PermissionId = "Delete" });
 
-            rolePermissions.Add(new RolePermission { RoleId = "Guest", PermissionId = "Read" });
-            rolePermissions.Add(new RolePermission { RoleId = "User", PermissionId = "Read" });
-            rolePermissions.Add(new RolePermission { RoleId = "User", PermissionId = "Write" });
-            rolePermissions.Add(new RolePermission { RoleId = "Owner", PermissionId = "FullPermissions" });
-            modelBuilder.Entity<RolePermission>().HasData(rolePermissions);
+            //rolePermissions.Add(new RolePermission { RoleId = "Guest", PermissionId = "Read" });
+            //rolePermissions.Add(new RolePermission { RoleId = "User", PermissionId = "Read" });
+            //rolePermissions.Add(new RolePermission { RoleId = "User", PermissionId = "Write" });
+            //rolePermissions.Add(new RolePermission { RoleId = "Owner", PermissionId = "FullPermissions" });
+            //modelBuilder.Entity<RolePermission>().HasData(rolePermissions);
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

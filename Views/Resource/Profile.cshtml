@@ -9,14 +9,25 @@
     <div id="status" class="alert d-none" role="alert"></div>
     <div class="user-section">
         <div class="flex-center col-6 form-container">
-            <form id="uploadForm" enctype="multipart/form-data" >
+           @*    <form id="uploadForm" enctype="multipart/form-data" >
+                  <div class="form-group">
+                      <label for="fileName">File Name</label>
+                      <input type="text" class="form-control" id="fileName" name="FileName" required />
+                  </div>
+                  <div class="form-group">
+                      <label for="file">Select File</label>
+                      <input type="file" class="form-control-file" id="file" name="file" accept=".png, .jpg, .jpeg" />
+                  </div>
+                  <button type="submit" class="btn btn-primary">Upload</button>
+              </form> *@
+            <form id="uploadForm-video" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="fileName">File Name</label>
-                    <input type="text" class="form-control" id="fileName" name="FileName" required />
+                    <input type="text" class="form-control" id="fileName" name="fileName" required />
                 </div>
                 <div class="form-group">
                     <label for="file">Select File</label>
-                    <input type="file" class="form-control-file" id="file" name="file" accept=".png, .jpg, .jpeg" />
+                    <input type="file" class="form-control-file" id="file" name="file" accept=".mp4" />
                 </div>
                 <button type="submit" class="btn btn-primary">Upload</button>
             </form>
@@ -83,11 +94,57 @@
                         }
                     },
                     error: function (xhr, status, error) {
-                        updateStatus('danger', `Failed to add`);
                         $('#uploadForm')[0].reset();
                     }
                 });
             });
+            $('#uploadForm-video').on("submit", async function (event) {
+                event.preventDefault(); // Prevent the default form submission
+
+                const CHUNK_SIZE = 1024 * 1024; // 1MB per chunk
+                let start = 0;
+                const formData = new FormData(this);
+                const file = formData.get('file'); // Get the file from the FormData
+                const filename = formData.get('fileName'); // Get the file from the FormData
+                let end=1
+
+                while (start < file.size) {
+                    if (start+CHUNK_SIZE>file.size)
+                        end=file.size
+                    else
+                        end=start+CHUNK_SIZE
+                    console.log(start,end)
+                    const chunk = file.slice(start, end);
+                    let count=start/CHUNK_SIZE +1 
+                    let chunkFormData = formData; // Create a new FormData for the chunk
+                    chunkFormData.append("source", chunk); // Append the current chunk
+                    chunkFormData.append("fileName", filename); // Append the filename
+                    chunkFormData.append("start", start); // Append the filename
+                    chunkFormData.append("end", end); // Append the filename
+
+                    chunkFormData.append("contentRange", `bytes ${start}-${end - 1}/${file.size}`); // Append the filename
+                    console.log(start,end)
+                    await $.ajax({
+                        url: `http://localhost:3000/api/v1/Resources/videos`, // Target URL
+                        type: 'POST', // HTTP method
+                        processData: false, // Prevent jQuery from converting the data into query string
+                        contentType: false,
+                        data:chunkFormData,
+                        success: function (response) {
+                            if (response.redirectUrl !== null) {
+                                // redirect(response.redirectUrl)
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.log(error)
+                        }
+                    })
+                    if (end>=file.size)
+                        break;
+                    start = end; // Move to the next chunk
+                }
+            });
+
 
             $(document).on('click', '.page-btn', function () {
                 const page = $(this).data('page');
