@@ -14,10 +14,10 @@ namespace ShareResource.Controllers
     public class AuthController : ControllerBase
     {
 
-        private readonly IAuthService<User, Token> _authService;
+        private readonly IAuthService<User> _authService;
         private readonly IMapper _mapper;
 
-        public AuthController(IAuthService<User, Token> authService, IMapper mapper)
+        public AuthController(IAuthService<User> authService, IMapper mapper)
         {
             _mapper = mapper;
             _authService = authService;

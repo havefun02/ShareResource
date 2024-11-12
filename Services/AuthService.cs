@@ -11,121 +11,66 @@ using ShareResource.Exceptions;
 
 namespace ShareResource.Services
 {
-    public class AuthService : IAuthService<User, Token>
+    public class AuthService : IAuthService<User>
     {
         private readonly IRepository<User,AppDbContext> _userRepository;
         private readonly IRepository<Role, AppDbContext> _roleRepository;
-
-        private readonly IRepository<Token, AppDbContext> _tokenRepository;
         private readonly IJwtService<User> _jwtService;
 
-        public AuthService(IRepository<User, AppDbContext> userRepository, IRepository<Token, AppDbContext> tokenRepository, IRepository<Role, AppDbContext> roleRepository, IJwtService<User> jwtService)
+        public AuthService(IRepository<User, AppDbContext> userRepository, IRepository<Role, AppDbContext> roleRepository, IJwtService<User> jwtService)
         {
             _roleRepository= roleRepository;
             _userRepository = userRepository;
-            _tokenRepository = tokenRepository;
             _jwtService = jwtService;
         }
 
-        public async Task<Token> GetTokenInfoAsync(string token)
-        {
-            var dbSet = _tokenRepository.GetDbSet();
-            try
-            {
-                var tokenResult = await dbSet.Include(t => t.User)
-                                              .SingleOrDefaultAsync(t => t.RefreshToken == token);
-                if (tokenResult == null) {
-                    throw new NullReferenceException("Can not find the token");
-                }
-                return tokenResult;
-            }
-            catch { throw; }
-        }
-
-        public async Task<Token> UpdateTokenAsync(Token token)
-        {
-            try
-            {
-                var tokenResult = _jwtService.RefreshToken();
-                token.RefreshToken = tokenResult.token;
-                token.ExpiredAt = tokenResult.expiredAt;
-                token.IsRevoked = false;
-                var updatedToken = await _tokenRepository.Update(token);
-                if (updatedToken == null) {
-                    throw new NullReferenceException("Can not update token");
-                }
-                return updatedToken;
-            }
-            catch {
-                throw;
-            }
-        }
-
-        
 
         public async Task<(string, string)> Login(LoginDto dto)
         {
-            var userContext=_userRepository.GetDbSet();
-            var tokenContext = _tokenRepository.GetDbSet();
+            var userContext = _userRepository.GetDbSet();
 
 
-            var user = await userContext.SingleOrDefaultAsync(u=>u.UserEmail==dto.Email); // Assuming this method exists
+            var user = await userContext.Include(u => u.UserToken).SingleOrDefaultAsync(u => u.UserEmail == dto.Email); // Assuming this method exists
 
             if (user == null)
             {
                 throw new ArgumentException("Invalid email or password.");
             }
 
+
             var passwordHasher = new PasswordHasher<User>();
-            var result = passwordHasher.VerifyHashedPassword(user, user.UserPassword!, dto.Password);
+            var result = passwordHasher.VerifyHashedPassword(user, user.UserPassword!, dto.Password!);
 
             if (result == PasswordVerificationResult.Failed)
             {
                 throw new ArgumentException("Invalid email or password.");
             }
 
-            var accessToken = _jwtService.GenerateToken(user);
-            var refreshToken = _jwtService.RefreshToken();
+            var accessToken = _jwtService.GenerateAccessToken(user);
+            var refreshToken = _jwtService.GenerateRefreshToken();
             try
             {
-                var userToken = await tokenContext.SingleOrDefaultAsync(t => t.UserId == user.UserId);
-                if (userToken != null)
+                if (user.UserToken != null)
                 {
-                    userToken.RefreshToken = refreshToken.token!;
-                    userToken.ExpiredAt = refreshToken.expiredAt;
-                    await _tokenRepository.Update(userToken);
+                    user.UserToken.RefreshToken = refreshToken.token!;
+                    user.UserToken.ExpiredAt = refreshToken.expiredAt;
+                    user.UserToken.IsRevoked = false;
+                    await _userRepository.Update(user);
                 }
                 else
                 {
-                    await _tokenRepository.CreateAsync(new Token { RefreshToken=refreshToken.token,ExpiredAt=refreshToken.expiredAt,UserId=user.UserId});
+                    var token = new Token() { IsRevoked=false, RefreshToken = refreshToken.token, ExpiredAt = refreshToken.expiredAt, UserId = user.UserId };
+                    user.UserToken = token;
+                    await _userRepository.Update(user);
                 }
             }
-            catch (Exception ex) {
-                throw new Exception("Internal server error during query user login operation "+ ex.Message);
+            catch (Exception ex)
+            {
+                throw new Exception("Internal server error during query user login operation " + ex.Message);
             }
             return (accessToken, refreshToken.token!);
         }
 
-        public async Task<bool> Logout(string userId)
-        {
-            try
-            {
-                var tokenContext = _tokenRepository.GetDbSet();
-                var token = await tokenContext.SingleOrDefaultAsync(t => t.UserId == userId);
-                if (token == null)
-                {
-                    throw new NullReferenceException("Invalid user");
-                }
-                token.IsRevoked = true;
-                var updateResult = await _tokenRepository.Update(token);
-                if (updateResult != null) return true;
-                else throw new InvalidOperationException("Internal server error during logout");
-            }
-            catch
-            {
-                throw;
-            }
-        }
 
         public async Task<bool> Register(RegisterDto user)
         {
@@ -140,16 +85,13 @@ namespace ShareResource.Services
                     throw new ArgumentException("User with this email already exists.");
                 }
 
-                var guestRole = await roleContext.SingleOrDefaultAsync(r => r.RoleName == "Guest");
-                if (guestRole == null) throw new Exception("Internal exception");
-
                 var newUser = new User
                 {
                     UserId = Guid.NewGuid().ToString(),
                     UserName = user.UserName,
                     UserEmail = user.Email,
                     UserPhone = user.UserPhone,
-                    UserRoleId = guestRole.RoleId,
+                    UserRoleId = "Guest"
                 };
 
                 var passwordHasher = new PasswordHasher<User>();
@@ -166,17 +108,53 @@ namespace ShareResource.Services
             }
         }
 
-        public async Task<bool> UpdatePassword(UpdatePasswordDto dto,string userId)
+        public async Task<bool> UpdatePassword(UpdatePasswordDto dto, string userId)
         {
-            var user = await _userRepository.FindOneById(userId);
+            var userContext = _userRepository.GetDbSet();
+
+
+            var user = await userContext.Include(u => u.UserToken).SingleOrDefaultAsync(u => u.UserId == userId); // Assuming this method exists
+
             if (user == null)
             {
-                throw new ArgumentException("User not found.");
+                throw new ArgumentException("Invalid email or password.");
             }
 
             var passwordHasher = new PasswordHasher<User>();
             user.UserPassword = passwordHasher.HashPassword(user, dto.NewPassword);
-            var updateResult=await _userRepository.Update(user);
+            if (user.UserToken != null) {
+                user.UserToken!.IsRevoked = true;
+            }
+            else
+            {
+                throw new InvalidOperationException("Invalid user token");
+            }
+            var updateResult = await _userRepository.Update(user);
+            if (updateResult == null) throw new InvalidOperationException("Internal error getting user data");
+            return true;
+        }
+
+        public async Task<bool> Logout(string userId)
+        {
+            var userContext = _userRepository.GetDbSet();
+
+
+            var user = await userContext.Include(u => u.UserToken).SingleOrDefaultAsync(u => u.UserId == userId); // Assuming this method exists
+
+            if (user == null)
+            {
+                throw new ArgumentException("Invalid email or password.");
+            }
+
+            if (user.UserToken != null)
+            {
+                user.UserToken!.IsRevoked = true;
+            }
+            else
+            {
+                throw new InvalidOperationException("Invalid user token");
+            }
+            var updateResult = await _userRepository.Update(user);
             if (updateResult == null) throw new InvalidOperationException("Internal error getting user data");
             return true;
         }

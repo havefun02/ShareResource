@@ -5,10 +5,9 @@ using ShareResource.Models.Dtos;
 
 namespace ShareResource.Interfaces
 {
-    public interface IAuthService<Entity,Token> 
+    public interface IAuthService<Entity> 
     {
-        public Task<Token> UpdateTokenAsync(Token token);
-        public Task<Token> GetTokenInfoAsync(string token);
+
         public Task<(string,string)> Login(LoginDto user);
         public Task<bool> Register(RegisterDto user);
         public Task<bool> Logout(string userId);

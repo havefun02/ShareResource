@@ -1,12 +1,11 @@
-﻿using ShareResource.Interfaces;
-using System.Security.Claims;
+﻿using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Cryptography;
+using ShareResource.Interfaces;
+using ShareResource.Models.Entities;
+using ShareResource.Interfaces;
 using ShareResource.Models.Entities;
 
 namespace ShareResource.Services
@@ -36,14 +35,15 @@ namespace ShareResource.Services
             }
         }
 
-        public string GenerateToken(User user)
+        public string GenerateAccessToken(User user)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.UserId!),
-                new Claim(ClaimTypes.Role, user.UserRoleId!)
+                new Claim(ClaimTypes.NameIdentifier, user.UserId),
+                new Claim(ClaimTypes.Role, user.UserRoleId),
+                new Claim(ClaimTypes.Name, user.UserName)
             };
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -59,7 +59,7 @@ namespace ShareResource.Services
             return tokenHandler.WriteToken(token);
         }
 
-        public ClaimsPrincipal ValidateToken(string token)
+        public ClaimsPrincipal ValidateAccessToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
@@ -85,7 +85,7 @@ namespace ShareResource.Services
             }
         }
 
-        public RefreshTokenResult RefreshToken()
+        public RefreshTokenResult GenerateRefreshToken()
         {
             var randomBytes = new byte[32];
             using (var rng = RandomNumberGenerator.Create())

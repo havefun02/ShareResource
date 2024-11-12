@@ -6,7 +6,6 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication;
 using CRUDFramework.Cores;
 using CRUDFramework.Interfaces;
-using ShareResource.Policies;
 using ShareResource.Interfaces;
 using ShareResource.Services;
 using ShareResource.Models.Entities;
@@ -17,6 +16,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.Features;
+using JwtCookiesScheme.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
+using static ShareResource.Policies.RBACPolicies;
 namespace ShareResource
 {
     public class Startup
@@ -51,15 +54,24 @@ namespace ShareResource
                 });
                 return configuration.CreateMapper();
             });
+            services.AddMemoryCache();
+            services.AddSingleton<RolePermissionsCacheService>();
+            services.AddScoped<IAuthorizationHandler, RoleAuthorizationHandler<AdminOnlyRequirement>>();
+            services.AddScoped<IAuthorizationHandler, RoleAuthorizationHandler<OwnerOnlyRequirement>>();
+            services.AddDataProtection()
+               .SetApplicationName("AuthenticationApp")
+              .PersistKeysToFileSystem(new DirectoryInfo(@"C:\Temp\Keys"))
+              .SetDefaultKeyLifetime(TimeSpan.FromDays(30));
             services.AddScoped<IUserService<User>, UserService>();
+            services.AddScoped<ITokenService<Token>, TokenService>();
+            services.AddScoped<IEncryptionService, EncryptionService>();
             services.AddScoped<IAdminService<User>, UserService>();
             services.AddScoped<IRoleService<Role>, RoleService>();
-            services.AddScoped<IAuthService<User, Token>, AuthService>();
+            services.AddScoped<IAuthService<User>, AuthService>();
             services.AddScoped<IResourceMod<Img>, ResourceModService>();
             services.AddScoped<IResourceAccess<Img>, ResourceAccessService>();
             services.AddScoped<IPaginationService<Img>, OffsetPaginationService<Img>>();
             services.AddHttpContextAccessor();
-
             services.AddSingleton<IJwtService<User>,JwtService>();
 
 
@@ -72,13 +84,11 @@ namespace ShareResource
                           .AllowAnyMethod();
                 });
             });
-            services.AddAuthentication("JWT-COOKIES-SCHEME").AddScheme<AuthenticationSchemeOptions, AppAuthenticationHandler>("JWT-COOKIES-SCHEME", null);
-            
-            services.AddAuthorization(options =>
+            services.AddAuthentication("JWT-COOKIES-SCHEME").AddScheme<AuthenticationSchemeOptions, AuthenticationScheme>("JWT-COOKIES-SCHEME", null);
+            services.AddAuthorization(option =>
             {
-                options.AddPolicy("OwnerOnly", policy =>
-            policy.RequireRole("Owner"));
-
+                option.AddPolicy("AdminOnly", policy => policy.Requirements.Add(new AdminOnlyRequirement(services.BuildServiceProvider().GetService<RolePermissionsCacheService>())));
+                option.AddPolicy("ExecuteOnly", policy => policy.Requirements.Add(new ExecutePermissionOnly(services.BuildServiceProvider().GetService<RolePermissionsCacheService>())));
 
             });
             services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo { Title = "DEVELOPMENT API", Version = "v1" }); });

@@ -1,48 +1,59 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using ShareResource.Models.Entities;
+using ShareResource.Interfaces;
+using ShareResource.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using ShareResource.Decorators;
-using ShareResource.Interfaces;
-using ShareResource.Models.Entities;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
-
-namespace ShareResource.Policies
+namespace ShareResource
 {
-    public class AppAuthenticationHandler:AuthenticationHandler<AuthenticationSchemeOptions>
+    public class AuthenticationScheme : AuthenticationHandler<AuthenticationSchemeOptions>
     {
         private readonly IJwtService<User> _jwtService;
-        private readonly IAuthService<User,Token>  _authService;
+        private readonly ITokenService<Token> _tokenService;
+        private readonly IEncryptionService _encryptionService;
 
-        public AppAuthenticationHandler(
+        public AuthenticationScheme(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
             UrlEncoder encoder,
             IJwtService<User> jwtService,
-            IAuthService<User, Token> authService
+            ITokenService<Token> tokenService, IEncryptionService encryptionService
             )
             : base(options, logger, encoder)
         {
+            _encryptionService = encryptionService;
             _jwtService = jwtService;
-            _authService = authService;
+            _tokenService = tokenService;
         }
 
-
-        bool CanBeIgnored(HttpContext context)
+        bool NeedAuthorize(HttpContext context)
         {
             var endpoint = context.GetEndpoint();
             if (endpoint == null) return false;
 
-            var controllerActionDescriptor = endpoint.Metadata
-                .GetMetadata<ControllerActionDescriptor>();
+            var controllerDescriptor = endpoint.Metadata
+                .GetMetadata<ControllerActionDescriptor>()
+                ?.ControllerTypeInfo;
 
-            var result= controllerActionDescriptor?.MethodInfo
+            var hasAuthorizeOnController = controllerDescriptor?
                 .GetCustomAttributes(typeof(AuthorizeAttribute), true)
                 .Any() ?? false;
-            return result;
+
+            var actionDescriptor = endpoint.Metadata
+                .GetMetadata<ControllerActionDescriptor>()?.MethodInfo;
+
+            var hasAuthorizeOnAction = actionDescriptor?
+                .GetCustomAttributes(typeof(AuthorizeAttribute), true)
+                .Any() ?? false;
+
+            return hasAuthorizeOnController || hasAuthorizeOnAction;
         }
+
         private async Task<AuthenticateResult> HandleExpiredTokenAsync()
         {
             var refreshToken = Context.Request.Cookies["refreshToken"];
@@ -53,90 +64,125 @@ namespace ShareResource.Policies
 
             try
             {
-                var tokenInfo = await _authService.GetTokenInfoAsync(refreshToken);
-                if (tokenInfo == null ||tokenInfo.ExpiredAt < DateTime.UtcNow)
+                refreshToken = _encryptionService.DecryptData(refreshToken);
+                var tokenInfo = await _tokenService.GetTokenInfo(refreshToken);
+                if (tokenInfo == null || tokenInfo.ExpiredAt < DateTime.UtcNow ||tokenInfo.IsRevoked)
                 {
                     return AuthenticateResult.Fail("Invalid refresh token");
                 }
 
-                var newAccessToken = _jwtService.GenerateToken(tokenInfo.User!);
+                var newAccessToken = _jwtService.GenerateAccessToken(tokenInfo.User!);
                 if (!string.IsNullOrEmpty(newAccessToken))
                 {
-                    Context.Response.Cookies.Append("accessToken", newAccessToken, new CookieOptions
+                    var newRefreshToken = await _tokenService.UpdateTokenAsync(tokenInfo);
+                    Context.Response.Cookies.Append("accessToken", _encryptionService.EncryptData(newAccessToken), new CookieOptions
                     {
                         HttpOnly = true,
                         SameSite = SameSiteMode.Strict,
                     });
 
-                    var newRefreshToken = await _authService.UpdateTokenAsync(tokenInfo);
-                    Context.Response.Cookies.Append("refreshToken", newRefreshToken.RefreshToken!, new CookieOptions
+                    Context.Response.Cookies.Append("refreshToken", _encryptionService.EncryptData(newRefreshToken.RefreshToken!), new CookieOptions
                     {
                         HttpOnly = true,
                         SameSite = SameSiteMode.Strict,
                     });
-                    var principal = _jwtService.ValidateToken(newAccessToken);
+                    Context.Response.Cookies.Append("isLogged", "Yes", new CookieOptions
+                    {
+                        HttpOnly = true,
+                        //Secure = true,
+                        SameSite = SameSiteMode.Strict,
+                    });
+                    var principal = _jwtService.ValidateAccessToken(newAccessToken);
                     var ticket = new AuthenticationTicket(principal, "JWT-COOKIES-SCHEME");
+
                     return AuthenticateResult.Success(ticket);
                 }
                 return AuthenticateResult.Fail("Failed to generate new access token");
             }
             catch (ArgumentException ex)
             {
-                return AuthenticateResult.Fail("User not found with error " +ex.Message);
+                return AuthenticateResult.Fail(ex.Message);
             }
             catch (Exception ex)
             {
-                return AuthenticateResult.Fail($"Error refreshing token: {ex.Message}");
+                return AuthenticateResult.Fail($"Error occured while trying to validate reset token: {ex.Message}");
             }
         }
         protected override Task HandleChallengeAsync(AuthenticationProperties properties)
         {
-            var returnUrl = Context.Request.Path + Context.Request.QueryString;
-            if (returnUrl != null)
-            {
-                Context.Response.Redirect($"/account/login?returnUrl={returnUrl}");
-            }
+            Response.StatusCode = StatusCodes.Status401Unauthorized;
+            Context.Response.Redirect("/auth/login");
             return Task.CompletedTask;
         }
         protected override Task HandleForbiddenAsync(AuthenticationProperties properties)
         {
-            // Handle forbidden access
             Response.StatusCode = StatusCodes.Status403Forbidden;
             return Task.CompletedTask;
         }
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            if (CanBeIgnored(Context))
+            var isLoginEndpoint = Context.Request.Path.StartsWithSegments("/auth/login");
+            if (NeedAuthorize(Context) || isLoginEndpoint)
             {
                 var token = Context.Request.Cookies["accessToken"];
-                if (string.IsNullOrEmpty(token))
+                var refresh = Context.Request.Cookies["refreshToken"];
+
+                if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(refresh))
                 {
+                    Context.Response.Cookies.Delete("isLogged");
                     return AuthenticateResult.Fail("No token provided");
                 }
                 try
                 {
-                    var principal = _jwtService.ValidateToken(token);
-                    if (principal != null)
+                    token = _encryptionService.DecryptData(token);
+                    refresh=_encryptionService.EncryptData(refresh);
+                    var tokenInfo = await _tokenService.GetTokenInfo(refresh);
+                    if (tokenInfo == null || tokenInfo.IsRevoked || tokenInfo.ExpiredAt< DateTime.UtcNow)
                     {
-                        var ticket = new AuthenticationTicket(principal, "JWT-COOKIES-SCHEME");
-                        return AuthenticateResult.Success(ticket);
+                        Context.Response.Cookies.Delete("isLogged");
+                        return AuthenticateResult.Fail("No token provided");
                     }
-                    else
+                    var principal = _jwtService.ValidateAccessToken(token);
+                    var ticket = new AuthenticationTicket(principal, "JWT-COOKIES-SCHEME");
+
+                    Context.Response.Cookies.Append("isLogged", "Yes", new CookieOptions
                     {
-                        return AuthenticateResult.Fail("Invalid token");
+                        HttpOnly = true,
+                        //Secure = true,
+                        SameSite = SameSiteMode.Strict,
+                    });
+                    if (isLoginEndpoint)
+                    {
+                        Context.Response.Redirect("/User/Profile");
                     }
+                    return AuthenticateResult.Success(ticket);
                 }
                 catch (SecurityTokenExpiredException)
                 {
-                    return await HandleExpiredTokenAsync();
-                        
-                }
-                catch(ArgumentException)
-                {
-                    return AuthenticateResult.Fail("User not found");
+                    var verifyExpired = await HandleExpiredTokenAsync();
+                    if (verifyExpired.Succeeded)
+                    {
+
+                        if (isLoginEndpoint)
+                        {
+                            Context.Response.Cookies.Append("isLogged", "Yes", new CookieOptions
+                            {
+                                HttpOnly = true,
+                                //Secure = true,
+                                SameSite = SameSiteMode.Strict,
+                            });
+
+                            Context.Response.Redirect("/User/Profile");
+                        }
+                        return verifyExpired;
+                    }
+                    Context.Response.Cookies.Delete("isLogged");
+                    return verifyExpired;
+
                 }
                 catch (Exception ex)
                 {
+                    Context.Response.Cookies.Delete("isLogged");
                     return AuthenticateResult.Fail($"Authentication failed: {ex.Message}");
                 }
             }
