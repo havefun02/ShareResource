@@ -1,7 +1,11 @@
 ﻿.main-page{
     padding:0 80px;
 }
-
+.img-icon{
+    width:30px;
+    height:auto;
+    object-fit:cover;
+}
 .user-section{
     display:flex;
     flex-direction:row;

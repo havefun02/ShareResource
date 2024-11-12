@@ -160,6 +160,8 @@ namespace ShareResource.Controllers
                 {
                     HttpContext.Response.Cookies.Delete("accessToken");
                     HttpContext.Response.Cookies.Delete("refreshToken");
+                    HttpContext.Response.Cookies.Delete("isLogged");
+
                     return RedirectToAction("Login");
                 }
                 else return NoContent();

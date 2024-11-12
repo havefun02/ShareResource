@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using CRUDFramework.Cores;
+using Microsoft.AspNetCore.Http;
 using ShareResource.Models.Dtos;
 using ShareResource.Models.Entities;
 using ShareResource.Models.ViewModels;
@@ -20,6 +21,12 @@ namespace ShareResource.Models
             .ForMember(dest => dest.FileSize, opt => opt.MapFrom(src => src.file!.Length)) // Mapping file size
             .ForMember(dest => dest.UploadDate, opt => opt.MapFrom(src => DateTime.UtcNow)); // Set current date
             CreateMap<User, UserViewModel>();
+            CreateMap<User, UserUpdateViewModel>()
+                .ForMember(dest => dest.UserIconInBytes, opt => opt.MapFrom(src => src.UserIcon))
+                .ForMember(dest => dest.UserIcon, opt => opt.Ignore());
+
+            CreateMap<UserUpdateViewModel, UserDto>()
+               .ForMember(dest => dest.UserIcon, opt => opt.MapFrom(src => ConvertFormFileToByteArray(src.UserIcon)));
             CreateMap<UpdateImgDto, Img>();
            
 
@@ -31,6 +38,19 @@ namespace ShareResource.Models
                    {
                        Permission = rp.PermissionId!
                    }).ToList() ?? new List<PermissionResultDto>())); // Handles null RolePermissions
+        }
+        private byte[] ConvertFormFileToByteArray(IFormFile formFile)
+        {
+            if (formFile == null)
+                return null;
+            byte[] bytes;
+
+            using (var memoryStream = new MemoryStream())
+            {
+                formFile.CopyTo(memoryStream);
+                bytes= memoryStream.ToArray();
+            }
+            return bytes;
         }
     }
 }

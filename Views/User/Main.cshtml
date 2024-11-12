@@ -27,7 +27,7 @@
                     @if (Model.User!.UserIcon != null && Model.User.UserIcon.Length > 0)
                     {
                         var base64Icon = Convert.ToBase64String(Model.User.UserIcon);
-                        <img src="data:image/png;base64,@base64Icon" alt="@Model.User.UserName's Icon" class="img-thumbnail" />
+                        <img src="data:image/png;base64,@base64Icon" alt="@Model.User.UserName's Icon" class="img-thumbnail img-icon" />
                     }
                     <p>User Name :<a> @Model.User.UserName</a> </p>
                 </div>
@@ -38,6 +38,9 @@
                         Total Items: <a id="total-items">@Model.Pagination!.totalItems</a>
                     </p>
 
+                </div>
+                <div>
+                    <a asp-action="EditProfile" asp-controller="User">Edit profile</a>
                 </div>
             </div>
         </div>

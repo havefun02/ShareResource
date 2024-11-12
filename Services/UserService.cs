@@ -9,6 +9,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 
 namespace ShareResource.Services
 {
@@ -48,10 +49,8 @@ namespace ShareResource.Services
                 }
                 userData.UserName = userDto.UserName;
                 userData.UserPhone = userDto.UserPhone;
+                userData.UserIcon = userDto.UserIcon;
                 var user = await _userRepository.Update(userData);
-                var userContext = this._userRepository.GetDbSet();
-
-                user = await userContext.Include(u => u.UserRole!).ThenInclude(r => r.RolePermissions!).SingleOrDefaultAsync(u => u.UserId == userId);
                 if (user == null) { throw new InvalidOperationException(); }
                 return user;
             }

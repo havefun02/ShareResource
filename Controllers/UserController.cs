@@ -57,52 +57,77 @@ namespace ShareResource.Controllers
                 return View("Main");
             }
         }
+
         [Authorize]
-        [HttpPut("basic-users")]
-        public async Task<ActionResult<UserResultDto>> EditProfile([FromBody] UserDto userDto)
+        [HttpGet("users")]
+        public async Task<IActionResult> EditProfile()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = userIdClaim?.Value;
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                ViewData["Error"] = "User ID cannot be null or empty.";
+                return View("Edit");
+            }
+            try
+            {
+                var user = await _userService.GetUserProfile(userId);
+
+                var userViewModel = _mapper.Map<UserUpdateViewModel>(user);
+                return View("Edit", userViewModel);
+            }
+            catch (Exception)
+            {
+                return View("Edit");    
+            }
+        }
+
+        [Authorize]
+        [HttpPost("users")]
+        public async Task<IActionResult> EditProfile(UserUpdateViewModel userUpdateViewModel)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             var userId = userIdClaim?.Value;
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return View("Edit", userUpdateViewModel);
             }
-            if (userDto == null || string.IsNullOrWhiteSpace(userId))
+            if (userUpdateViewModel == null || string.IsNullOrWhiteSpace(userId))
             {
-                return BadRequest("User data cannot be null.");
+                return View("Edit", userUpdateViewModel);
             }
             try
             {
-                var updatedUser = await _userService.EditProfile(userDto, userId);
-                var userResult = _mapper.Map<UserResultDto>(updatedUser);
-                return Ok(userResult);
+                var userData = _mapper.Map<UserDto>(userUpdateViewModel);
+                var updatedUser = await _userService.EditProfile(userData, userId);
+                return RedirectToAction("GetUserProfile", "User");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return BadRequest(ex.Message);
+                return View("Edit", userUpdateViewModel);
             }
         }
 
         [Authorize]
-        [HttpDelete("basic-users")]
+        [HttpDelete("users")]
         public async Task<IActionResult> DeleteProfile()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             var userId = userIdClaim?.Value;
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return BadRequest("User ID cannot be null or empty.");
+                return RedirectToAction("/");
             }
             try
             {
                 await _userService.DeleteProfile(userId);
                 HttpContext.Response.Cookies.Delete("accessToken");
                 HttpContext.Response.Cookies.Delete("refreshToken");
-                return Ok();
+                return RedirectToAction("/");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return BadRequest(ex.Message);
+                return RedirectToAction("/");
             }
         }
     }

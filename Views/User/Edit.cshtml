@@ -1,0 +1,41 @@
+﻿@model ShareResource.Models.ViewModels.UserUpdateViewModel
+
+@{
+    ViewData["Title"] = "Edit Profile";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="main-page">
+    <div id="status" class="alert d-none" role="alert"></div>
+    <div class="user-section">
+        <div class="flex-center col-6">
+            <div class="user-brief-container">
+                    <form asp-action="EditProfile" asp-controller="User" method="post" enctype="multipart/form-data">
+                        <div>
+                         @if (Model != null)
+                        {
+                            @if (Model.UserIconInBytes != null && Model.UserIconInBytes.Length > 0)
+                            {
+                                var base64Icon = Convert.ToBase64String(Model.UserIconInBytes);
+                                <img src="data:image/png;base64,@base64Icon" alt="@Model.UserName's Icon" class="img-thumbnail" />
+                            }
+                            <div class="form-group">
+                                <label for="userIcon">Change Icon</label>
+                                <input type="file" class="form-control-file" id="userIcon" name="UserIcon" />
+                            </div>
+                            <div class="form-group">
+                                <label for="userName">User Name</label>
+                                <input type="text" class="form-control" id="userName" name="UserName" value="@Model.UserName" />
+                            </div>
+                            <div class="form-group">
+                                <label for="userPhone">User Phone</label>
+                                <input type="text" class="form-control" id="userPhone" name="userPhone" value="@Model.UserPhone" />
+                            </div>
+                        }
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+
+                    </form>
+            </div>
+        </div>
+    </div>
+</div>
