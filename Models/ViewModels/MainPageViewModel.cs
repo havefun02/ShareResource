@@ -4,7 +4,7 @@ namespace ShareResource.Models.ViewModels
 {
     public class MainPageViewModel
     {
-        public ICollection<ImgResultViewModel>? Imgs { get; set; }
+        public List<ImgResultViewModel>? Imgs =new List<ImgResultViewModel>();
         public PaginationViewModel? Pagination { get; set; }
         public UserViewModel? User { set; get; }
 

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CRUDFramework.Cores;
 using ShareResource.Models.Dtos;
 using ShareResource.Models.Entities;
 using ShareResource.Models.ViewModels;
@@ -18,13 +19,9 @@ namespace ShareResource.Models
             .ForMember(dest => dest.ContentType, opt => opt.MapFrom(src => src.file!.ContentType)) // Mapping ContentType from the file
             .ForMember(dest => dest.FileSize, opt => opt.MapFrom(src => src.file!.Length)) // Mapping file size
             .ForMember(dest => dest.UploadDate, opt => opt.MapFrom(src => DateTime.UtcNow)); // Set current date
-            CreateMap<User, UserResultDto>()
-                .ForMember(m=>m.UserRole,opt=>opt
-                    .MapFrom(src=>new RoleResultDto {Role=src.UserRole!.RoleName,Permissions=src.UserRole!.RolePermissions!.Select(rp =>new PermissionResultDto{Permission=rp.PermissionId!}).ToList()
-                    } ));
-
             CreateMap<User, UserViewModel>();
             CreateMap<UpdateImgDto, Img>();
+           
 
 
             CreateMap<Role, RoleResultDto>()

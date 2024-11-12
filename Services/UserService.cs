@@ -100,7 +100,7 @@ namespace ShareResource.Services
                 if (string.IsNullOrWhiteSpace(userId)) throw new ArgumentNullException(nameof(userId));
                 var userContext = this._userRepository.GetDbSet();
 
-                var user = await userContext.Include(u => u.UserRole!).ThenInclude(r => r.RolePermissions!).SingleOrDefaultAsync(u => u.UserId == userId);
+                var user = await userContext.SingleOrDefaultAsync(u => u.UserId == userId);
                 if (user == null)
                 {
                     throw new ArgumentException("User not found.");

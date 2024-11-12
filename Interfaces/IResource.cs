@@ -3,7 +3,7 @@ using ShareResource.Models.Entities;
 
 namespace ShareResource.Interfaces
 {
-    public interface IResourceAccess<T> where T : class
+    public interface IResourceReaderService<T> where T : class
     {
         public Task<IPaginationResult<T>> GetSampleResource(IPaginationParams paginationParams);
         public Task<T> GetResourceById(string resourceId);
@@ -12,7 +12,7 @@ namespace ShareResource.Interfaces
 
 
     }
-    public interface IResourceMod<T> where T : class
+    public interface IResourceWriterService<T> where T : class
     {
         public Task<T> UploadResource(T resource, string userId);
         public Task<int> DeleteResource(string resourceId,string userId);

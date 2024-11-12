@@ -68,8 +68,8 @@ namespace ShareResource
             services.AddScoped<IAdminService<User>, UserService>();
             services.AddScoped<IRoleService<Role>, RoleService>();
             services.AddScoped<IAuthService<User>, AuthService>();
-            services.AddScoped<IResourceMod<Img>, ResourceModService>();
-            services.AddScoped<IResourceAccess<Img>, ResourceAccessService>();
+            services.AddScoped<IResourceReaderService<Img>, ResourceReaderService>();
+            services.AddScoped<IResourceWriterService<Img>, ResourceWriterService>();
             services.AddScoped<IPaginationService<Img>, OffsetPaginationService<Img>>();
             services.AddHttpContextAccessor();
             services.AddSingleton<IJwtService<User>,JwtService>();
@@ -108,7 +108,7 @@ namespace ShareResource
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-                c.RoutePrefix = string.Empty;
+                c.RoutePrefix = "docs";
             });
 
             app.UseCors("AllowAll");

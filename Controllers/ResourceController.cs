@@ -18,12 +18,12 @@ namespace ShareResource.Controllers
     public class ResourceController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IResourceMod<Img> _service;
-        private readonly IResourceAccess<Img> _accessService;
+        private readonly IResourceWriterService<Img> _service;
+        private readonly IResourceReaderService<Img> _accessService;
         private readonly IUserService<User> _userService;
 
         private readonly string _imageFolderPath;
-        public ResourceController(IResourceMod<Img> service, IResourceAccess<Img> accessService, IMapper mapper, IConfiguration configuration, IUserService<User> userService)
+        public ResourceController(IResourceWriterService<Img> service, IResourceReaderService<Img> accessService, IMapper mapper, IConfiguration configuration, IUserService<User> userService)
         {
             _accessService=accessService;
             _userService = userService;
@@ -58,7 +58,7 @@ namespace ShareResource.Controllers
                 var resourceViewModel = _mapper.Map<List<ImgResultViewModel>>(userResources!.items);
                 var userProfile = await _userService.GetUserProfile(userId);
                 var userViewModel = _mapper.Map<UserViewModel>(userProfile);
-                var paginationModel = new PaginationViewModel { limit = userResources.limit, offset = userResources.offset, currentPage = userResources.offset / userResources.limit + 1, total = userResources.totalItems };
+                var paginationModel = new PaginationViewModel { limit = userResources.limit, offset = userResources.offset, currentPage = userResources.offset / userResources.limit + 1, totalItems = userResources.totalItems };
                 var mainView = new MainPageViewModel { Imgs = resourceViewModel, User = userViewModel, Pagination = paginationModel };
                 return View(mainView);
             }
@@ -78,7 +78,7 @@ namespace ShareResource.Controllers
                 offsetParams.offset = (page - 1) * offsetParams.limit;
                 var resources = await _accessService.GetSampleResource(offsetParams) as OffsetPaginationResult<Img>;
                 var resourceViewModel = _mapper.Map<List<ImgResultViewModel>>(resources!.items);
-                var paginationModel = new PaginationViewModel { limit = resources.limit, offset = resources.offset, currentPage = resources.offset / resources.limit + 1, total = resources.totalItems };
+                var paginationModel = new PaginationViewModel { limit = resources.limit, offset = resources.offset, currentPage = resources.offset / resources.limit + 1, totalItems = resources.totalItems };
                 var mainView = new MainPageViewModel { Imgs = resourceViewModel, User = null, Pagination = paginationModel };
                 return View(mainView);
             }
@@ -147,7 +147,7 @@ namespace ShareResource.Controllers
             var resourceViewModel = _mapper.Map<List<ImgResultViewModel>>(userResources!.items);
             var userProfile = await _userService.GetUserProfile(userId);
             var userViewModel = _mapper.Map<UserViewModel>(userProfile);
-            var paginationModel = new PaginationViewModel { limit = userResources.limit, offset = userResources.offset, currentPage = userResources.offset / userResources.limit + 1, total = userResources.totalItems };
+            var paginationModel = new PaginationViewModel { limit = userResources.limit, offset = userResources.offset, currentPage = userResources.offset / userResources.limit + 1, totalItems = userResources.totalItems };
 
             var mainView = new MainPageViewModel { Imgs = resourceViewModel, User = userViewModel ,Pagination= paginationModel };
             return View("UserProfile", mainView);

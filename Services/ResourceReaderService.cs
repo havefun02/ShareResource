@@ -7,11 +7,11 @@ using ShareResource.Models.Entities;
 
 namespace ShareResource.Services
 {
-    public class ResourceAccessService : IResourceAccess<Img>
+    public class ResourceReaderService : IResourceReaderService<Img>
     {
         private readonly IRepository<Img, AppDbContext> _repository;
         private readonly IPaginationService<Img> _paginationService;
-        public ResourceAccessService(IRepository<Img, AppDbContext> repository, IPaginationService<Img> paginationService)
+        public ResourceReaderService(IRepository<Img, AppDbContext> repository, IPaginationService<Img> paginationService)
         {
             _paginationService = paginationService;
             _repository = repository;

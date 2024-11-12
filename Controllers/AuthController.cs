@@ -15,11 +15,14 @@ namespace ShareResource.Controllers
 
         private readonly IAuthService<User> _authService;
         private readonly IMapper _mapper;
+        private readonly IEncryptionService _encryptionService;
 
-        public AuthController(IAuthService<User> authService, IMapper mapper)
+
+        public AuthController(IAuthService<User> authService, IMapper mapper,IEncryptionService encryptionService)
         {
             _mapper = mapper;
             _authService = authService;
+            _encryptionService= encryptionService;
         }
         [HttpGet("login")]
         public IActionResult Login()
@@ -45,13 +48,19 @@ namespace ShareResource.Controllers
             {
                 var (access, refresh) = await _authService.Login(loginDto);
                 if (access== null ||refresh==null) return View("Login",loginDto);
-                HttpContext.Response.Cookies.Append("accessToken", access, new CookieOptions
+                HttpContext.Response.Cookies.Append("accessToken", _encryptionService.EncryptData(access), new CookieOptions
                 {
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.Strict,
                 });
-                HttpContext.Response.Cookies.Append("refreshToken", refresh, new CookieOptions
+                HttpContext.Response.Cookies.Append("refreshToken", _encryptionService.EncryptData(refresh), new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                });
+                HttpContext.Response.Cookies.Append("isLogged", "Yes", new CookieOptions
                 {
                     HttpOnly = true,
                     Secure = true,
@@ -60,9 +69,12 @@ namespace ShareResource.Controllers
                 var returnUrl = Request.Query["returnUrl"].ToString();
                 if (string.IsNullOrEmpty(returnUrl))
                 {
-                    return View("Login", loginDto);
+                    return Redirect("/");
                 }
-                return RedirectToAction("Resource/profile");
+                else
+                {
+                    return Redirect(returnUrl);
+                }
             }
             catch (Exception)
             {
@@ -148,13 +160,13 @@ namespace ShareResource.Controllers
                 {
                     HttpContext.Response.Cookies.Delete("accessToken");
                     HttpContext.Response.Cookies.Delete("refreshToken");
-                    return Ok(new {redirectUrl="/account/login"});
+                    return RedirectToAction("Login");
                 }
-                else return BadRequest();
+                else return NoContent();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return BadRequest(ex.Message);
+                return NoContent();
             }
         }
 

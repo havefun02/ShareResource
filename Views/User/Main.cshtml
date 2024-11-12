@@ -1,0 +1,49 @@
+﻿@model ShareResource.Models.ViewModels.MainPageViewModel
+
+@{
+    ViewData["Title"] = "Profile";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="main-page">
+    <div id="status" class="alert d-none" role="alert"></div>
+    <div class="user-section">
+        <div class="flex-center col-6 form-container">
+            <form id="uploadForm" enctype="multipart/form-data" >
+                <div class="form-group">
+                <label for="fileName">File Name</label>
+                <input type="text" class="form-control" id="fileName" name="FileName" required />
+                </div>
+                <div class="form-group">
+                <label for="file">Select File</label>
+                <input type="file" class="form-control-file" id="file" name="file" accept=".png, .jpg, .jpeg" />
+                </div>
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </form> 
+         </div>
+        <div class="flex-center col-6">
+            <div class="user-brief-container">
+                <div>
+                    @if (Model.User!.UserIcon != null && Model.User.UserIcon.Length > 0)
+                    {
+                        var base64Icon = Convert.ToBase64String(Model.User.UserIcon);
+                        <img src="data:image/png;base64,@base64Icon" alt="@Model.User.UserName's Icon" class="img-thumbnail" />
+                    }
+                    <p>User Name :<a> @Model.User.UserName</a> </p>
+                </div>
+                <div>
+
+                    <p>User Email:<a> @Model.User.UserEmail </a></p>
+                    <p>
+                        Total Items: <a id="total-items">@Model.Pagination!.totalItems</a>
+                    </p>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_UserGallery", Model.Imgs)
+    @await Html.PartialAsync("_PaginationComponent", Model.Pagination)
+</div>
+

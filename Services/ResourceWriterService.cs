@@ -8,14 +8,14 @@ using CRUDFramework.Cores;
 
 namespace ShareResource.Services
 {
-    public class ResourceModService : IResourceMod<Img>
+    public class ResourceWriterService : IResourceWriterService<Img>
     {
         private readonly IRepository<Img, AppDbContext> _repository;
         private readonly IPaginationService<Img> _paginationService;
 
 
 
-        public ResourceModService(IRepository<Img, AppDbContext> repository, IPaginationService<Img> paginationService)
+        public ResourceWriterService(IRepository<Img, AppDbContext> repository, IPaginationService<Img> paginationService)
         {
             _paginationService = paginationService;
             _repository = repository;

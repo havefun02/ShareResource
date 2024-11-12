@@ -1,0 +1,9 @@
+﻿@model ShareResource.Models.ViewModels.MainPageViewModel
+@{
+    ViewData["Title"] = "Main";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="main-page">
+    @await Html.PartialAsync("_Gallery", Model.Imgs)
+    @await Html.PartialAsync("_PaginationComponent", Model.Pagination)
+</div>

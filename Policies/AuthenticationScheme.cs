@@ -111,7 +111,7 @@ namespace ShareResource
         protected override Task HandleChallengeAsync(AuthenticationProperties properties)
         {
             Response.StatusCode = StatusCodes.Status401Unauthorized;
-            Context.Response.Redirect("/auth/login");
+            Context.Response.Redirect("/api/v1/auths/login");
             return Task.CompletedTask;
         }
         protected override Task HandleForbiddenAsync(AuthenticationProperties properties)
@@ -135,7 +135,7 @@ namespace ShareResource
                 try
                 {
                     token = _encryptionService.DecryptData(token);
-                    refresh=_encryptionService.EncryptData(refresh);
+                    refresh=_encryptionService.DecryptData(refresh);
                     var tokenInfo = await _tokenService.GetTokenInfo(refresh);
                     if (tokenInfo == null || tokenInfo.IsRevoked || tokenInfo.ExpiredAt< DateTime.UtcNow)
                     {

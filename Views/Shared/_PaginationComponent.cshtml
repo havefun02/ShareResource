@@ -5,14 +5,14 @@
     {
         <button id="prevPage" class="unchanged-btn" @(Model.currentPage == 1 ? "disabled" : "")>Previous</button>
         <span id="pageNumbers">
-            @for (int i = 1; i <= Math.Ceiling((decimal)Model.total / Model.limit); i++)
+            @for (int i = 1; i <= (int)Math.Ceiling((decimal)Model.totalItems / Model.limit); i++)
             {
                 <button  class="page-btn @(i == Model.currentPage ? "current-page" : "")" data-page="@i" >
                     @i
                 </button>
             }
         </span>
-        <button id="nextPage" class="unchanged-btn" @(Model.currentPage == Math.Ceiling((decimal)Model.total / Model.limit + 1) ? "disabled" : "")>Next</button>
+        <button id="nextPage" class="unchanged-btn" @(Model.currentPage == Math.Ceiling((decimal)Model.totalItems / Model.limit + 1) ? "disabled" : "")>Next</button>
    }
 </div>
 
