@@ -30,7 +30,7 @@ namespace ShareResource.Services
             var userContext = _userRepository.GetDbSet();
 
 
-            var user = await userContext.Include(u => u.UserToken).SingleOrDefaultAsync(u => u.UserEmail == dto.Email); // Assuming this method exists
+            var user = await userContext.Include(u => u.UserToken).SingleOrDefaultAsync(u => u.UserEmail == dto.UserEmail); // Assuming this method exists
 
             if (user == null)
             {
@@ -39,7 +39,7 @@ namespace ShareResource.Services
 
 
             var passwordHasher = new PasswordHasher<User>();
-            var result = passwordHasher.VerifyHashedPassword(user, user.UserPassword!, dto.Password!);
+            var result = passwordHasher.VerifyHashedPassword(user, user.UserPassword!, dto.UserPassword!);
 
             if (result == PasswordVerificationResult.Failed)
             {
@@ -79,7 +79,7 @@ namespace ShareResource.Services
                 var userContext = _userRepository.GetDbSet();
                 var roleContext = _roleRepository.GetDbSet();
 
-                var existingUser = await userContext.SingleOrDefaultAsync(u => u.UserEmail == user.Email);
+                var existingUser = await userContext.SingleOrDefaultAsync(u => u.UserEmail == user.UserEmail);
                 if (existingUser != null)
                 {
                     throw new ArgumentException("User with this email already exists.");
@@ -89,13 +89,13 @@ namespace ShareResource.Services
                 {
                     UserId = Guid.NewGuid().ToString(),
                     UserName = user.UserName,
-                    UserEmail = user.Email,
+                    UserEmail = user.UserEmail,
                     UserPhone = user.UserPhone,
                     UserRoleId = "Guest"
                 };
 
                 var passwordHasher = new PasswordHasher<User>();
-                newUser.UserPassword = passwordHasher.HashPassword(newUser, user.Password);
+                newUser.UserPassword = passwordHasher.HashPassword(newUser, user.UserPassword);
 
                 var userCreated = await _userRepository.CreateAsync(newUser);
                 if (userCreated != null)

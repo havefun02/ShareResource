@@ -9,9 +9,8 @@ using System.Security.Claims;
 
 namespace ShareResource.Controllers
 {
-    [ApiController]
     [Route("api/v1/auths")]
-    public class AuthController : ControllerBase
+    public class AuthController:Controller
     {
 
         private readonly IAuthService<User> _authService;
@@ -22,14 +21,30 @@ namespace ShareResource.Controllers
             _mapper = mapper;
             _authService = authService;
         }
+        [HttpGet("login")]
+        public IActionResult Login()
+        {
+            return View("Login");
+        }
+        [HttpGet("register")]
+        public IActionResult Register()
+        {
+            return View("Register");
+        }
+        [HttpGet("change-password")]
+        public IActionResult ChangePassword()
+        {
+            return View("ChangePassword");
+        }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> Login(LoginDto loginDto)
         {
             try
             {
                 var (access, refresh) = await _authService.Login(loginDto);
-                if (access== null ||refresh==null) return NotFound("Please login again!");
+                if (access== null ||refresh==null) return View("Login",loginDto);
                 HttpContext.Response.Cookies.Append("accessToken", access, new CookieOptions
                 {
                     HttpOnly = true,
@@ -43,40 +58,41 @@ namespace ShareResource.Controllers
                     SameSite = SameSiteMode.Strict,
                 });
                 var returnUrl = Request.Query["returnUrl"].ToString();
-                if (!string.IsNullOrEmpty(returnUrl))
+                if (string.IsNullOrEmpty(returnUrl))
                 {
-                    return Ok(new { RedirectUrl = returnUrl });
-
+                    return View("Login", loginDto);
                 }
-                return Ok(new { RedirectUrl = "/resources/profile" });
+                return RedirectToAction("Resource/profile");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return BadRequest(ex.Message);
+                return View("Login",loginDto);
             }
         }
         [HttpPost("register")]
-        public async Task<ActionResult<UserResultDto>> Register([FromBody] RegisterDto registerDto)
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> Register( RegisterDto registerDto)
         {
+            Console.WriteLine("register");
             if (!ModelState.IsValid)
             {
-                return BadRequest("Form data is not correct");
+                return View("Register", registerDto);
             }
             try
             {
                 var registerResult = await _authService.Register(registerDto);
                 if (registerResult)
                 {
-                    return Ok(new { RedirectUrl = "/account/login" });
+                    return RedirectToAction("Login", "Auth");
                 }
                 else
                 {
-                    return BadRequest("Register failed");
+                    return View("Register", registerDto);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return BadRequest(ex.Message);
+                return View("Register", registerDto);
             }
         }
         [Authorize]
@@ -101,17 +117,18 @@ namespace ShareResource.Controllers
             }
         }
         [HttpPost("change-password")]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto changePasswordDto)
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> ChangePassword( ChangePasswordDto changePasswordDto)
         {
             try
             {
                 var changePasswordResult = await _authService.ChangePassword(changePasswordDto);
-                if (changePasswordResult) return Ok(new {redirectUrl="/account/login"});
-                else return BadRequest();
+                if (changePasswordResult) return RedirectToAction("Login");
+                else return View("ChangePassword",changePasswordDto);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return BadRequest(ex.Message);
+                return View("ChangePassword", changePasswordDto);
             }
         }
         [Authorize]
