@@ -117,6 +117,7 @@ namespace ShareResource
         protected override Task HandleForbiddenAsync(AuthenticationProperties properties)
         {
             Response.StatusCode = StatusCodes.Status403Forbidden;
+            Context.Response.Redirect("/");
             return Task.CompletedTask;
         }
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()

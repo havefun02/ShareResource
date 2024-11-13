@@ -49,14 +49,20 @@
         @{
             var isLogged = Context.Request.Cookies["isLogged"] == "Yes";
         }
-        @if (isLogged)
-        {
-            <div class="login-group">
+
+        <div class="login-group">
+            @if (isLogged)
+            {
                 <form method="post" asp-action="Logout" asp-controller="Auth">
-                <button asp-action="Logout" asp-controller="Auth" class="btn">Logout</button>
-            </form>
+                    <button asp-action="Logout" asp-controller="Auth" class="btn">Logout</button>
+                </form>
+            }
+            else
+            {
+                    <a href="/api/v1/auths/login"  class="btn">Login</a>
+            }
         </div>
-        }
+
     </nav>
     }
 

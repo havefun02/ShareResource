@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CRUDFramework.Cores;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using ShareResource.Interfaces;
@@ -108,7 +109,7 @@ namespace ShareResource.Controllers
             }
         }
 
-        [Authorize]
+        [Authorize(Policy = "UserSelfDelete")]
         [HttpDelete("users")]
         public async Task<IActionResult> DeleteProfile()
         {
@@ -116,18 +117,21 @@ namespace ShareResource.Controllers
             var userId = userIdClaim?.Value;
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return RedirectToAction("/");
+                return NotFound();
+
             }
             try
             {
                 await _userService.DeleteProfile(userId);
                 HttpContext.Response.Cookies.Delete("accessToken");
                 HttpContext.Response.Cookies.Delete("refreshToken");
-                return RedirectToAction("/");
+                HttpContext.Response.Cookies.Delete("isLogged");
+
+                return Ok(new { redirectUrl = "/explore" });
             }
             catch (Exception)
             {
-                return RedirectToAction("/");
+                return NotFound();
             }
         }
     }

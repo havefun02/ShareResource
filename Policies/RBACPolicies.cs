@@ -65,6 +65,22 @@ namespace ShareResource.Policies
                 return false;
             }
         }
+        public class UserSelfDeleteRequirement : RoleRequirementBase
+        {
+            public UserSelfDeleteRequirement(RolePermissionsCacheService service) : base(service)
+            {
+            }
+            public override async Task<bool> IsAuthorized(string roleId)
+            {
+
+                var roles = await this._service.GetRolesAsync();
+                if (roles != null && roles.Contains(roleId) && roleId == "Guest")
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
         public class RoleAuthorizationHandler<TRequirement> : AuthorizationHandler<TRequirement>
             where TRequirement : RoleRequirementBase
         {

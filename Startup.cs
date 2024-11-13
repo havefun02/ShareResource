@@ -58,6 +58,8 @@ namespace ShareResource
             services.AddSingleton<RolePermissionsCacheService>();
             services.AddScoped<IAuthorizationHandler, RoleAuthorizationHandler<AdminOnlyRequirement>>();
             services.AddScoped<IAuthorizationHandler, RoleAuthorizationHandler<OwnerOnlyRequirement>>();
+            services.AddScoped<IAuthorizationHandler, RoleAuthorizationHandler<UserSelfDeleteRequirement>>();
+
             services.AddDataProtection()
                .SetApplicationName("AuthenticationApp")
               .PersistKeysToFileSystem(new DirectoryInfo(@"C:\Temp\Keys"))
@@ -89,6 +91,7 @@ namespace ShareResource
             {
                 option.AddPolicy("AdminOnly", policy => policy.Requirements.Add(new AdminOnlyRequirement(services.BuildServiceProvider().GetService<RolePermissionsCacheService>())));
                 option.AddPolicy("ExecuteOnly", policy => policy.Requirements.Add(new ExecutePermissionOnly(services.BuildServiceProvider().GetService<RolePermissionsCacheService>())));
+                option.AddPolicy("UserSelfDelete", policy => policy.Requirements.Add(new UserSelfDeleteRequirement(services.BuildServiceProvider().GetService<RolePermissionsCacheService>())));
 
             });
             services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo { Title = "DEVELOPMENT API", Version = "v1" }); });

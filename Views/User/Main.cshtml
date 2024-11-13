@@ -41,6 +41,9 @@
                 </div>
                 <div>
                     <a asp-action="EditProfile" asp-controller="User">Edit profile</a>
+                    <form id="deleteUser">
+                        <button type="submit">Delete profile</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -49,4 +52,25 @@
     @await Html.PartialAsync("_UserGallery", Model.Imgs)
     @await Html.PartialAsync("_PaginationComponent", Model.Pagination)
 </div>
-
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#deleteUser").submit(function (e){
+                e.preventDefault();
+                $.ajax({
+                    url: "/users", 
+                    type: 'Delete', 
+                    success: function (response) {
+                        console.log(response)
+                        window.location.href=response.redirectUrl;
+                    },
+                    error: function (xhr, status, error) {
+                        const statusDiv = $("#status");
+                        statusDiv.removeClass("d-none").addClass("alert-danger").text("Failed to delete profile.");
+                    }
+                });
+            })
+        });
+    </script>
+}
