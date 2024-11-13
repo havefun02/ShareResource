@@ -15,4 +15,20 @@
         <button id="nextPage" class="unchanged-btn" @(Model.currentPage == Math.Ceiling((decimal)Model.totalItems / Model.limit + 1) ? "disabled" : "")>Next</button>
    }
 </div>
+<script>
+    document.querySelectorAll('.page-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const page = this.getAttribute('data-page');
+            window.location.href = '@Url.Action("GetUserResource", "Resource")?page=' + page;
+        });
+    });
+
+    document.querySelectorAll('#prevPage, #nextPage').forEach(button => {
+        button.addEventListener('click', function () {
+            const page = this.getAttribute('data-page');
+            window.location.href = '@Url.Action("GetUserResource", "Resource")?page=' + page;
+        });
+    });
+</script>
+
 

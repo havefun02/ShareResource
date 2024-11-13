@@ -30,28 +30,36 @@ namespace ShareResource.Controllers
 
         [Authorize]
         [HttpGet]
-        public async Task<IActionResult> GetUserProfile()
+        public async Task<IActionResult> GetUserProfile(int page=1)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             var userId = userIdClaim?.Value;
             if (string.IsNullOrWhiteSpace(userId))
             {
                 ViewData["Error"] = "User ID cannot be null or empty.";
-                return View("Main");
+                return Redirect("api/v1/auths/login");
             }
             try
             {
-                var user = await _userService.GetUserProfile(userId);
-                var userViewModel = _mapper.Map<UserViewModel>(user);
-                var offsetParams=new OffsetPaginationParams { limit = 12,offset=1 };
-                var resource = await _resourceService.GetUserResources(offsetParams,userId) as OffsetPaginationResult<Img> ?? null;
-                if (resource == null) {
-                    return View("Main");
+                if (page <= 0)
+                {
+                    TempData["Error"] = "Invalid request";
+                    return Redirect("/explore");
                 }
-                var paginationViewModel=new PaginationViewModel() {limit=resource.limit,offset=resource.offset,totalItems=resource.totalItems,currentPage=(int)Math.Ceiling((decimal) resource.offset/resource.limit)};
-                var imgViewModel = _mapper.Map<List<Img>,List<ImgResultViewModel>>(resource.items!);
-                var mainViewModel = new MainPageViewModel() { User = userViewModel, Pagination = paginationViewModel, Imgs =imgViewModel };
-                return View("Main",mainViewModel);
+                else
+                {
+                    OffsetPaginationParams offsetParams = new OffsetPaginationParams();
+                    offsetParams.offset = (page - 1) * offsetParams.limit;
+                    var resources = await _resourceService.GetUserResources(offsetParams, userId) as OffsetPaginationResult<Img>;
+                    var user = await _userService.GetUserProfile(userId);
+                    var userViewModel = _mapper.Map<UserViewModel>(user);
+                    var resource = await _resourceService.GetUserResources(offsetParams, userId) as OffsetPaginationResult<Img> ?? null;
+                    var paginationViewModel = new PaginationViewModel() { limit = resource.limit, offset = resource.offset, totalItems = resource.totalItems, currentPage = (int)Math.Ceiling((decimal)resource.offset / resource.limit) +1 };
+                    var imgViewModel = _mapper.Map<List<Img>, List<ImgResultViewModel>>(resource.items!);
+                    var galleryViewModel = new GalleryViewModel() { Imgs = imgViewModel, Pagination = paginationViewModel };
+                    var mainViewModel = new MainPageViewModel() { User = userViewModel, Gallery = galleryViewModel };
+                    return View("Main", mainViewModel);
+                }
             }
             catch (Exception)
             {

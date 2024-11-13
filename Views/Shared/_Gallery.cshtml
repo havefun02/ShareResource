@@ -1,28 +1,134 @@
-﻿@model ICollection<ShareResource.Models.ViewModels.ImgResultViewModel>
-
+﻿@model ShareResource.Models.ViewModels.GalleryViewModel
 <div class="gallery-container">
-<div class="row" id="gallery"> 
-    @if (Model!=null){
-        @foreach (var image in Model)
+    <div class="row" id="gallery">
+        @if (Model.Imgs != null)
         {
-            @await Html.PartialAsync("_ImgItem",image);
+            @foreach (var image in Model.Imgs)
+            {
+                @await Html.PartialAsync("_ImgItem", image)
+                ;
             }
         }
         else
         {
             <div>No item found</div>
         }
-       
     </div>
 </div>
-<script>
-    $(document).ready(function () {
-        $(document).on('click', '.clickable-items', function () {
-            const imgId = $(this).data('imgid');
-            const url = '/resources/' + imgId; // Use string concatenation
-            window.location.href = url;
-        });
-     
-    });
-</script>
+<div class="pagination">
+    @if (Model.Pagination != null)
+    {
+        <button id="prevPage" class="unchanged-btn" @(Model.Pagination.currentPage == 1 ? "disabled" : "")>Previous</button>
+        <span id="pageNumbers">
+            @for (int i = 1; i <= (int)Math.Ceiling((decimal)Model.Pagination.totalItems / Model.Pagination.limit); i++)
+            {
+                <button class="page-btn @(i == Model.Pagination.currentPage ? "current-page" : "")" data-page="@i">
+                    @i
+                </button>
+            }
+        </span>
+        <button id="nextPage" class="unchanged-btn" @(Model.Pagination.totalItems - Model.Pagination.currentPage * Model.Pagination.limit<0? "disabled" : "")>Next</button>
+    }
+</div>
 
+<script>
+   document.querySelectorAll('.page-btn').forEach(button => {
+    button.addEventListener('click', function () {
+        const page = this.getAttribute('data-page');
+        window.location.href = '@Url.Action("Explore", "Home")?page=' + page;
+    });
+});
+
+document.querySelector('#prevPage').addEventListener('click', function () {
+    let currentPage = @Model.Pagination.currentPage;  // Current page from the model
+    let prevPage = currentPage - 1;
+    if (prevPage >= 1) {
+        window.location.href = '@Url.Action("Explore", "Home")?page=' + prevPage;
+    }
+});
+
+document.querySelector('#nextPage').addEventListener('click', function () {
+    let currentPage = @Model.Pagination.currentPage;  // Current page from the model
+    let nextPage = currentPage + 1;
+    window.location.href = '@Url.Action("Explore", "Home")?page=' + nextPage;
+});
+</script>
+<script>
+    function deleteAsync(itemId) {
+        $.ajax({
+            url: `/api/v1/resources/${itemId}`,
+            method: 'DELETE',
+            success: function (data) {
+                const url = '/resources/profile' // Use string concatenation
+                window.location.href = url;
+            },
+            error: function () {
+                alert('Failed to load data.');
+            }
+        });
+    }
+    function updateNameAsync(itemId,name) {
+        $.ajax({
+            url: `/api/v1/resources/${itemId}`,
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({"FileName":name}),
+            success: function (data) {
+            },
+            error: function (error) {
+            }
+        });
+    }
+
+
+    let selectedImgId = null;
+    function resetModalState() {
+        selectedImgId = null; // Clear the selected image ID
+    }
+    $(document).on('click', '.btn-delete', function () {
+        selectedImgId = $(this).data('imgid');
+        $('#deleteModal').modal('show');
+    });
+
+    $('#confirmDelete').on('click', function () {
+        if (selectedImgId) {
+            deleteAsync(selectedImgId);
+
+        }
+    });
+    $('.btn-cancel, .btn-close').on('click', function () {
+        resetModalState();
+        $('#deleteModal').modal('hide');
+    });
+
+    function redirectToItem(imgId) {
+        const url = '/resources/' + imgId; // Use string concatenation
+        window.location.href = url;
+    }
+    $(document).on('click', '.clickable-items', function () {
+        const imgId = $(this).data('imgid');
+        redirectToItem(imgId);
+    });
+    $(document).on('click', '.btn-rename', function () {
+        const cardBody = $(this).closest('.card-body');
+        cardBody.find('.file-name').addClass('d-none');   // Hide the file name
+        cardBody.find('.rename-input').removeClass('d-none').focus(); // Show input field
+        $(this).text('Save').addClass('btn-save').removeClass('btn-rename');
+    });
+
+    $(document).on('click', '.btn-save', function () {
+        imgId = $(this).data('imgid');
+
+        const cardBody = $(this).closest('.card-body');
+        const newName = cardBody.find('.rename-input').val().trim();
+
+        if (newName) {
+            updateNameAsync(imgId,newName)
+            cardBody.find('.file-name').text(newName).removeClass('d-none');
+            cardBody.find('.rename-input').addClass('d-none');
+        }
+
+        $(this).text('Rename').addClass('btn-rename').removeClass('btn-save');
+    });
+
+</script>

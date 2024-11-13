@@ -1,10 +1,9 @@
-﻿@model ICollection<ShareResource.Models.ViewModels.ImgResultViewModel>
-
+﻿@model ShareResource.Models.ViewModels.GalleryViewModel
 <div class="gallery-container">
     <div class="row" id="gallery">
-        @if (Model != null)
+        @if (Model.Imgs != null)
         {
-            @foreach (var image in Model)
+            @foreach (var image in Model.Imgs)
             {
                 @await Html.PartialAsync("_UserImgItem", image);
             }
@@ -15,6 +14,44 @@
         }
     </div>
 </div>
+<div class="pagination">
+    @if (Model.Pagination != null)
+    {
+        <button id="prevPage" class="unchanged-btn" @(Model.Pagination.currentPage == 1 ? "disabled" : "")>Previous</button>
+        <span id="pageNumbers">
+            @for (int i = 1; i <= (int)Math.Ceiling((decimal)Model.Pagination.totalItems / Model.Pagination.limit); i++)
+            {
+                <button class="page-btn @(i == Model.Pagination.currentPage ? "current-page" : "")" data-page="@i">
+                    @i
+                </button>
+            }
+        </span>
+        <button id="nextPage" class="unchanged-btn" @(Model.Pagination.totalItems - Model.Pagination.currentPage * Model.Pagination.limit<0? "disabled" : "")>Next</button>
+    }
+</div>
+
+<script>
+   document.querySelectorAll('.page-btn').forEach(button => {
+    button.addEventListener('click', function () {
+        const page = this.getAttribute('data-page');
+        window.location.href = '@Url.Action("GetUserProfile", "User")?page=' + page;
+    });
+});
+
+document.querySelector('#prevPage').addEventListener('click', function () {
+    let currentPage = @Model.Pagination.currentPage;  // Current page from the model
+    let prevPage = currentPage - 1;
+    if (prevPage >= 1) {
+        window.location.href = '@Url.Action("GetUserProfile", "User")?page=' + prevPage;
+    }
+});
+
+document.querySelector('#nextPage').addEventListener('click', function () {
+    let currentPage = @Model.Pagination.currentPage;  // Current page from the model
+    let nextPage = currentPage + 1;
+    window.location.href = '@Url.Action("GetUserProfile", "User")?page=' + nextPage;
+});
+</script>
 <script>
     function deleteAsync(itemId) {
         $.ajax({

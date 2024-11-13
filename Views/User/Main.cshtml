@@ -1,5 +1,4 @@
 ﻿@model ShareResource.Models.ViewModels.MainPageViewModel
-
 @{
     ViewData["Title"] = "Profile";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -9,17 +8,7 @@
     <div id="status" class="alert d-none" role="alert"></div>
     <div class="user-section">
         <div class="flex-center col-6 form-container">
-            <form id="uploadForm" enctype="multipart/form-data" >
-                <div class="form-group">
-                <label for="fileName">File Name</label>
-                <input type="text" class="form-control" id="fileName" name="FileName" required />
-                </div>
-                <div class="form-group">
-                <label for="file">Select File</label>
-                <input type="file" class="form-control-file" id="file" name="file" accept=".png, .jpg, .jpeg" />
-                </div>
-                <button type="submit" class="btn btn-primary">Upload</button>
-            </form> 
+            @await Component.InvokeAsync("FormUpload")
          </div>
         <div class="flex-center col-6">
             <div class="user-brief-container">
@@ -35,7 +24,7 @@
 
                     <p>User Email:<a> @Model.User.UserEmail </a></p>
                     <p>
-                        Total Items: <a id="total-items">@Model.Pagination!.totalItems</a>
+                        Total Items: <a id="total-items">@Model.Gallery.Pagination!.totalItems</a>
                     </p>
 
                 </div>
@@ -49,8 +38,8 @@
         </div>
     </div>
 
-    @await Html.PartialAsync("_UserGallery", Model.Imgs)
-    @await Html.PartialAsync("_PaginationComponent", Model.Pagination)
+    @await Html.PartialAsync("_UserGallery", Model.Gallery)
+
 </div>
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

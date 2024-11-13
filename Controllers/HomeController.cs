@@ -5,7 +5,9 @@ using ShareResource.Interfaces;
 using ShareResource.Models.Dtos;
 using ShareResource.Models.Entities;
 using ShareResource.Models.ViewModels;
+using ShareResource.Services;
 using System.ComponentModel.Design;
+using System.Security.Claims;
 namespace ShareResource.Controllers
 {
     public class HomeController:Controller
@@ -25,19 +27,30 @@ namespace ShareResource.Controllers
         }
 
         [HttpGet("explore")]
-        public async Task<IActionResult> Explore()
+        public async Task<IActionResult> Explore(int page=1)
         {
-            var offsetParams = new OffsetPaginationParams { limit = 12, offset = 1 };
-            var resource = await _accessService.GetSampleResource(offsetParams) as OffsetPaginationResult<Img> ?? null;
-            if (resource == null)
+            try
             {
-                return View("Explore",null);
+                if (page <= 0)
+                {
+                    TempData["Error"] = "Invalid request";
+                    return Redirect("/explore");
+                }
+                else
+                {
+                    OffsetPaginationParams offsetParams = new OffsetPaginationParams();
+                    offsetParams.offset = (page - 1) * offsetParams.limit;
+                    var resources = await _accessService.GetSampleResource(offsetParams) as OffsetPaginationResult<Img>;
+                    var paginationViewModel = new PaginationViewModel() { limit = resources.limit, offset = resources.offset, totalItems = resources.totalItems, currentPage = (int)Math.Ceiling((decimal)resources.offset / resources.limit) + 1 };
+                    var imgViewModel = _mapper.Map<List<Img>, List<ImgResultViewModel>>(resources.items!);
+                    var galleryViewModel = new GalleryViewModel() { Imgs = imgViewModel, Pagination = paginationViewModel };
+                    return View("Explore", galleryViewModel);
+                }
             }
-            var paginationViewModel = new PaginationViewModel() { limit = resource.limit, offset = resource.offset, totalItems = resource.totalItems, currentPage = (int)Math.Ceiling((decimal)resource.offset / resource.limit) };
-            var imgViewModel = _mapper.Map<List<Img>, List<ImgResultViewModel>>(resource.items!);
-            var mainViewModel = new MainPageViewModel() { User = null, Pagination = paginationViewModel, Imgs = imgViewModel };
-
-            return View("Explore", mainViewModel);
+            catch (Exception)
+            {
+                return View("Explore");
+            }
         }
     }
 }

@@ -11,6 +11,7 @@ using ShareResource.Models.ViewModels;
 using ShareResource.Decorators;
 using CRUDFramework.Cores;
 using Microsoft.EntityFrameworkCore.Query;
+using NUglify;
 
 
 namespace ShareResource.Controllers
@@ -31,45 +32,14 @@ namespace ShareResource.Controllers
             _imageFolderPath = configuration.GetValue<string>("ImageStorage:ImageFolderPath") ?? string.Empty;
             _mapper = mapper;
         }
-        [Authorize]
-        [HttpGet("resources/profile")]
-        public async Task<IActionResult> Profile([FromQuery] int page = 1)
-        {
-            Console.WriteLine(User.Identity.IsAuthenticated);
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            var userId = userIdClaim?.Value;
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                TempData["Error"] = "User not found. Please log in.";
-                return Forbid("You are not allowed to access page");
-            }
-            if (page <= 0)
-            {
-                var userProfile = await _userService.GetUserProfile(userId);
-                var userViewModel = _mapper.Map<UserViewModel>(userProfile);
-                var mainView = new MainPageViewModel { Imgs = null, User = userViewModel, Pagination = null };
-                return View(mainView);
-            }
-            else
-            {
-                OffsetPaginationParams offsetParams = new OffsetPaginationParams();
-                offsetParams.offset = (page - 1) * offsetParams.limit;
-                var userResources = await _accessService.GetUserResources(offsetParams, userId) as OffsetPaginationResult<Img>;
-                var resourceViewModel = _mapper.Map<List<ImgResultViewModel>>(userResources!.items);
-                var userProfile = await _userService.GetUserProfile(userId);
-                var userViewModel = _mapper.Map<UserViewModel>(userProfile);
-                var paginationModel = new PaginationViewModel { limit = userResources.limit, offset = userResources.offset, currentPage = userResources.offset / userResources.limit + 1, totalItems = userResources.totalItems };
-                var mainView = new MainPageViewModel { Imgs = resourceViewModel, User = userViewModel, Pagination = paginationModel };
-                return View(mainView);
-            }
-        }
+        
         [AllowAnonymous]
-        [HttpGet("resources")]
-        public async Task<IActionResult> Main([FromQuery] int page = 1)
+        [HttpGet]
+        public async Task<IActionResult> Resource([FromQuery] int page = 1)
         {
             if (page <= 0)
             {
-                var mainView = new MainPageViewModel { Imgs = null, User = null, Pagination = null };
+                var mainView = new MainPageViewModel { Gallery = null, User = null};
                 return View(mainView);
             }
             else
@@ -79,24 +49,25 @@ namespace ShareResource.Controllers
                 var resources = await _accessService.GetSampleResource(offsetParams) as OffsetPaginationResult<Img>;
                 var resourceViewModel = _mapper.Map<List<ImgResultViewModel>>(resources!.items);
                 var paginationModel = new PaginationViewModel { limit = resources.limit, offset = resources.offset, currentPage = resources.offset / resources.limit + 1, totalItems = resources.totalItems };
-                var mainView = new MainPageViewModel { Imgs = resourceViewModel, User = null, Pagination = paginationModel };
+                var galleryViewModel=new GalleryViewModel() { Imgs= resourceViewModel,Pagination= paginationModel };
+                var mainView = new MainPageViewModel { User = null, Gallery = galleryViewModel };
                 return View(mainView);
             }
         }
-        [HttpGet("api/v1/users/resources")]
+        [HttpGet]
         [Authorize]
-        public async Task<IActionResult> GetUserData([FromQuery] int page)
+        public async Task<IActionResult> GetUserResource([FromQuery] int page)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             var userId = userIdClaim?.Value;
             if (string.IsNullOrWhiteSpace(userId))
             {
                 TempData["Error"] = "User not found. Please log in.";
-                return Forbid("You are not allowed to access page");
+                return Redirect("/api/v1/auths/login");
             }
-            if (page <= 0)
-            {
-                return BadRequest("Invalid request");
+            if (page <= 0) { 
+                TempData["Error"] = "Invalid request";
+                return NoContent();
             }
             else
             {
@@ -104,11 +75,13 @@ namespace ShareResource.Controllers
                 offsetParams.offset = (page - 1) * offsetParams.limit;
                 var resources = await _accessService.GetUserResources(offsetParams,userId) as OffsetPaginationResult<Img>;
                 var resourceViewModel = _mapper.Map<List<ImgResultViewModel>>(resources!.items);
-                return new JsonResult(resourceViewModel);
+                var paginationViewModel = new PaginationViewModel() { limit = resources.limit, offset = resources.offset, totalItems = resources.totalItems, currentPage = (int)Math.Ceiling((decimal)resources.offset / resources.limit) };
+                var galleryViewModel = new GalleryViewModel() { Imgs = resourceViewModel, Pagination = paginationViewModel };
+                return PartialView("_UserGallery", galleryViewModel);
             }
         }
 
-        [HttpGet("api/v1/resources")]
+        [HttpGet]
         public async Task<IActionResult> GetAppData([FromQuery] int page)
         {
             if (page <= 0)
@@ -125,7 +98,6 @@ namespace ShareResource.Controllers
             }
         }
         [HttpGet]
-        [Route("users/{userId}/resources")]
         public async Task<IActionResult> GetUserProfile(string userId, int page)
         {
             if (string.IsNullOrWhiteSpace(userId))
@@ -148,8 +120,9 @@ namespace ShareResource.Controllers
             var userProfile = await _userService.GetUserProfile(userId);
             var userViewModel = _mapper.Map<UserViewModel>(userProfile);
             var paginationModel = new PaginationViewModel { limit = userResources.limit, offset = userResources.offset, currentPage = userResources.offset / userResources.limit + 1, totalItems = userResources.totalItems };
+            var galleryViewModel = new GalleryViewModel() { Imgs = resourceViewModel, Pagination = paginationModel };
 
-            var mainView = new MainPageViewModel { Imgs = resourceViewModel, User = userViewModel ,Pagination= paginationModel };
+            var mainView = new MainPageViewModel { User = userViewModel ,Gallery= galleryViewModel };
             return View("UserProfile", mainView);
         }
 
@@ -162,9 +135,8 @@ namespace ShareResource.Controllers
         ///   
         [HttpPost]
         [Authorize]
-        [Route("api/v1/resources")]
         [FileValidator]
-        public async Task<IActionResult> Upload([FromForm] ImgDto fileMeta)
+        public async Task<IActionResult> Upload(ImgDto fileMeta)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             var userId = userIdClaim?.Value;
@@ -172,8 +144,7 @@ namespace ShareResource.Controllers
             if (string.IsNullOrWhiteSpace(userId))
             {
                 TempData["Error"] = "User not found. Please log in.";
-                return BadRequest("");
-            }
+                return Redirect("/");            }
 
             var fileExtension = Path.GetExtension(fileMeta.file!.FileName).ToLowerInvariant();
 
@@ -181,7 +152,7 @@ namespace ShareResource.Controllers
             if (!ModelState.IsValid)
             {
                 TempData["Error"] = "Invalid model data.";
-                return BadRequest();
+                return RedirectToAction("GetUserProfile","User");
             }
 
             try
@@ -196,17 +167,19 @@ namespace ShareResource.Controllers
                 var imgToUpload = _mapper.Map<Img>(fileMeta);
                 imgToUpload.FileUrl = filePath;
                 var uploadedResource = await _service.UploadResource(imgToUpload, userId);
-                return Ok(new {redirectUrl="/resources/profile" });
+                TempData["Success"] = "Created success.";
+
+                return RedirectToAction("GetUserProfile", "User");
+
             }
             catch (Exception ex)
             {
                 TempData["Error"] = $"Error uploading file: {ex.Message}";
-                return BadRequest();
+                return RedirectToAction("GetUserProfile", "User");
             }
         }
         [HttpPost]
         [Authorize]
-        [Route("api/v1/resources/videos")]
         public async Task<IActionResult> UploadChunk([FromForm] VidDto dto)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -252,7 +225,6 @@ namespace ShareResource.Controllers
         /// <param name="resourceId">The ID of the resource to update.</param>
         /// <param name="resource">The updated image resource.</param>
         /// <returns>The updated image resource.</returns>
-        [HttpPut("api/v1/resources/{resourceId}")]
         [Authorize] // Adjust the policy as needed
         public async Task<IActionResult> EditResource(string resourceId, [FromBody] UpdateImgDto resource)
         {
@@ -285,7 +257,6 @@ namespace ShareResource.Controllers
         /// </summary>
         /// <param name="resourceId">The ID of the resource to retrieve.</param>
         /// <returns>The image resource.</returns>
-        [HttpGet("resources/{resourceId}")]
         public async Task<IActionResult> GetDetailResourceById(string resourceId)
         {
             try
@@ -312,7 +283,6 @@ namespace ShareResource.Controllers
         /// </summary>
         /// <param name="resourceId">The ID of the resource to delete.</param>
         /// <returns>Result of the delete operation.</returns>
-        [HttpDelete("api/v1/resources/{resourceId}")]
         [Authorize] // Only admin can delete
         public async Task<IActionResult> DeleteResource(string resourceId)
         {

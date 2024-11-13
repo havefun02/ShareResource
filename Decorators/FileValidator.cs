@@ -9,7 +9,7 @@ namespace ShareResource.Decorators
     //[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = true, AllowMultiple = false)]
     public class FileValidator: ActionFilterAttribute
     {
-        private const long _maxFileSize = 5 * 1024; // 5MB limit
+        private const long _maxFileSize = 5 * 1024* 1024; // 5MB limit
         private readonly string[] AllowedMimeTypes = { "image/png", "image/jpeg", "video/mp4" };
         private readonly string[] _allowedExtensions = { ".png", ".jpg", ".jpeg", ".mp4" };
         public FileValidator() { }
