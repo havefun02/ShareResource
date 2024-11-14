@@ -8,5 +8,6 @@
             public DateTime UploadDate { get; set; }
             public string AuthorName { get; set; } =string.Empty;
             public string AuthorEmail { get; set; } =string.Empty ;
+            public string AuthorId { get; set; } = string.Empty;
     }
 }

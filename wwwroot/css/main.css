@@ -6,6 +6,17 @@
     height:auto;
     object-fit:cover;
 }
+.short-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 150px; /* Set a specific width */
+}
+.single-img {
+    width: 300px;
+    height: auto!important;
+    object-fit:cover;
+}
 .user-section{
     display:flex;
     flex-direction:row;

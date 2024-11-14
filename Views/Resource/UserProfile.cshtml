@@ -1,0 +1,31 @@
+﻿@model ShareResource.Models.ViewModels.MainPageViewModel
+@{
+    ViewData["Title"] = @Model.User.UserName;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="main-page">
+    <div class="user-section">
+        <div class="flex-center col-6">
+            <div class="user-brief-container">
+                <div>
+                    @if (Model.User!.UserIcon != null && Model.User.UserIcon.Length > 0)
+                    {
+                        var base64Icon = Convert.ToBase64String(Model.User.UserIcon);
+                        <img src="data:image/png;base64,@base64Icon" alt="@Model.User.UserName's Icon" class="img-thumbnail img-icon" />
+                    }
+                    <p>User Name :<a> @Model.User.UserName</a> </p>
+                </div>
+                <div>
+
+                    <p>User Email:<a> @Model.User.UserEmail </a></p>
+                    <p>
+                        Total Items: <a id="total-items">@Model.Gallery.Pagination.totalItems</a>
+                    </p>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Gallery", @Model.Gallery)
+</div>

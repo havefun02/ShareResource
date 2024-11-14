@@ -30,7 +30,6 @@
         <button id="nextPage" class="unchanged-btn" @(Model.Pagination.totalItems - Model.Pagination.currentPage * Model.Pagination.limit<0? "disabled" : "")>Next</button>
     }
 </div>
-
 <script>
    document.querySelectorAll('.page-btn').forEach(button => {
     button.addEventListener('click', function () {
@@ -53,54 +52,9 @@ document.querySelector('#nextPage').addEventListener('click', function () {
     window.location.href = '@Url.Action("Explore", "Home")?page=' + nextPage;
 });
 </script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
-    function deleteAsync(itemId) {
-        $.ajax({
-            url: `/api/v1/resources/${itemId}`,
-            method: 'DELETE',
-            success: function (data) {
-                const url = '/resources/profile' // Use string concatenation
-                window.location.href = url;
-            },
-            error: function () {
-                alert('Failed to load data.');
-            }
-        });
-    }
-    function updateNameAsync(itemId,name) {
-        $.ajax({
-            url: `/api/v1/resources/${itemId}`,
-            method: 'PUT',
-            contentType: 'application/json',
-            data: JSON.stringify({"FileName":name}),
-            success: function (data) {
-            },
-            error: function (error) {
-            }
-        });
-    }
-
-
-    let selectedImgId = null;
-    function resetModalState() {
-        selectedImgId = null; // Clear the selected image ID
-    }
-    $(document).on('click', '.btn-delete', function () {
-        selectedImgId = $(this).data('imgid');
-        $('#deleteModal').modal('show');
-    });
-
-    $('#confirmDelete').on('click', function () {
-        if (selectedImgId) {
-            deleteAsync(selectedImgId);
-
-        }
-    });
-    $('.btn-cancel, .btn-close').on('click', function () {
-        resetModalState();
-        $('#deleteModal').modal('hide');
-    });
-
     function redirectToItem(imgId) {
         const url = '/resources/' + imgId; // Use string concatenation
         window.location.href = url;
@@ -109,26 +63,4 @@ document.querySelector('#nextPage').addEventListener('click', function () {
         const imgId = $(this).data('imgid');
         redirectToItem(imgId);
     });
-    $(document).on('click', '.btn-rename', function () {
-        const cardBody = $(this).closest('.card-body');
-        cardBody.find('.file-name').addClass('d-none');   // Hide the file name
-        cardBody.find('.rename-input').removeClass('d-none').focus(); // Show input field
-        $(this).text('Save').addClass('btn-save').removeClass('btn-rename');
-    });
-
-    $(document).on('click', '.btn-save', function () {
-        imgId = $(this).data('imgid');
-
-        const cardBody = $(this).closest('.card-body');
-        const newName = cardBody.find('.rename-input').val().trim();
-
-        if (newName) {
-            updateNameAsync(imgId,newName)
-            cardBody.find('.file-name').text(newName).removeClass('d-none');
-            cardBody.find('.rename-input').addClass('d-none');
-        }
-
-        $(this).text('Rename').addClass('btn-rename').removeClass('btn-save');
-    });
-
 </script>

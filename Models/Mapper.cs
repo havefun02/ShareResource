@@ -13,7 +13,9 @@ namespace ShareResource.Models
         public Mapping() {
             CreateMap<Img, ImgResultViewModel>()
                .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.User!.UserName))
-               .ForMember(dest => dest.AuthorEmail, opt => opt.MapFrom(src => src.User!.UserEmail));
+               .ForMember(dest => dest.AuthorEmail, opt => opt.MapFrom(src => src.User!.UserEmail))
+               .ForMember(dest => dest.AuthorId, opt => opt.MapFrom(src => src.User!.UserId));
+
             CreateMap<ImgDto, Img>()
             .ForMember(dest => dest.ImgId, opt =>opt.MapFrom(src=>Guid.NewGuid().ToString())) // Assuming ImgId is generated and not in the DTO
             .ForMember(dest => dest.FileUrl, opt => opt.Ignore()) // Ignore if it's set elsewhere
