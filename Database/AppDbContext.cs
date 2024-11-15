@@ -126,6 +126,13 @@ namespace ShareResource.Database
                 entity.HasKey(t=> t.TokenId);
                 entity.Property(t=>t.IsRevoked).HasDefaultValue(false);
             });
+
+            modelBuilder.Entity<ImgLovers>(entity => {
+                entity.HasKey(t => new { t.UserId, t.ImgId });
+                entity.HasOne(t=>t.User).WithMany(u=>u.ImgLovers).HasForeignKey(u=>u.ImgId);
+                entity.HasOne(t => t.Img).WithMany(i=>i.ImgLovers).HasForeignKey(i=>i.ImgId);
+            });
+
             modelBuilder.Entity<Img>(entity =>
             {
                 entity.HasKey(e => e.ImgId);
