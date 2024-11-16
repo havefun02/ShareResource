@@ -50,12 +50,11 @@ namespace ShareResource.Controllers
                 {
                     OffsetPaginationParams offsetParams = new OffsetPaginationParams();
                     offsetParams.offset = (page - 1) * offsetParams.limit;
-                    var resources = await _resourceService.GetUserResources(offsetParams, userId) as OffsetPaginationResult<Img>;
+                    var resources = await _resourceService.GetUserResources(offsetParams, userId) as OffsetPaginationResult<Img>??null;
                     var user = await _userService.GetUserProfile(userId);
                     var userViewModel = _mapper.Map<UserViewModel>(user);
-                    var resource = await _resourceService.GetUserResources(offsetParams, userId) as OffsetPaginationResult<Img> ?? null;
-                    var paginationViewModel = new PaginationViewModel() { limit = resource.limit, offset = resource.offset, totalItems = resource.totalItems, currentPage = (int)Math.Ceiling((decimal)resource.offset / resource.limit) +1 };
-                    var imgViewModel = _mapper.Map<List<Img>, List<ImgResultViewModel>>(resource.items!);
+                    var paginationViewModel = new PaginationViewModel() { limit = resources.limit, offset = resources.offset, totalItems = resources.totalItems, currentPage = (int)Math.Ceiling((decimal)resources.offset / resources.limit) +1 };
+                    var imgViewModel = _mapper.Map<List<Img>, List<ImgResultViewModel>>(resources.items!);
                     var galleryViewModel = new GalleryViewModel() { Imgs = imgViewModel, Pagination = paginationViewModel };
                     var mainViewModel = new MainPageViewModel() { User = userViewModel, Gallery = galleryViewModel };
                     return View("Main", mainViewModel);

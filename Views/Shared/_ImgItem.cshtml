@@ -1,14 +1,11 @@
 ﻿@model ShareResource.Models.ViewModels.ImgResultViewModel
 @{
-    var isLogged = Context.Request.Cookies["isLogged"] == "Yes";
-        
+
 }
 <div class="col-md-3 mb-3">
-    <div class="card" data-imgid="@Model.ImgId">
-        <img src="@Url.Content(@Model.FileUrl)" alt="@Model.FileName" class="card-img-top clickable-items" />
-
+    <div class="card" >
+        <img src="@Url.Content(@Model.FileUrl)" alt="@Model.FileName" class="card-img-top clickable-items" data-imgid="@Model.ImgId" />
         <div class="card-body">
-            
             <p class="card-text">
                 <small class="text-muted">
                     File Name: @Model.FileName <br />
@@ -22,10 +19,32 @@
                     Email: <a href="mailto:@Model.AuthorEmail">@Model.AuthorEmail</a>
                 </small>
             </p>
-            <button class="btn btn-outline-primary btn-like-toggle"  data-imgid="@Model.ImgId" data-userid="@Model.AuthorId">
-                <i class="fas fa-thumbs-up"></i> Like
-            </button>
-                <span class="like-count" data-imgid="@Model.ImgId"></span>
+            @if (User.Identity.IsAuthenticated){
+                @if (@Model.LikeState==true)
+                {
+                    <button class="btn btn-outline-primary btn-like-toggle liked" data-imgid="@Model.ImgId" data-userid="@Model.AuthorId">
+                        <i class="fas fa-thumbs-up"></i>
+                        UnLike
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-outline-primary btn-like-toggle" data-imgid="@Model.ImgId" data-userid="@Model.AuthorId">
+                        <i class="fas fa-thumbs-up"></i>
+                        Like
+                    </button>
+                }
+
+            }
+            else
+            {
+                <form asp-action="Login" asp-controller="Auth" method="get">
+                <button type="submit" class="btn btn-outline-primary" data-imgid="@Model.ImgId" data-userid="@Model.AuthorId">
+                    <i class="fas fa-thumbs-up"></i> Like
+                </button>
+                </form>
+            }
+            <span class="like-count" data-imgid="@Model.ImgId">@Model.NumberOfLikes</span>
             
         </div>
     </div>

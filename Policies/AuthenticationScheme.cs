@@ -94,7 +94,7 @@ namespace ShareResource
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            var isLoginEndpoint = Context.Request.Path.StartsWithSegments("/auth/login");
+            var isLoginEndpoint = Context.Request.Path.StartsWithSegments("/api/v1/auths/login");
             accessToken = Context.Request.Cookies["accessToken"];
             refreshToken = Context.Request.Cookies["refreshToken"];
             if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(refreshToken))
@@ -115,7 +115,7 @@ namespace ShareResource
 
                 if (isLoginEndpoint)
                 {
-                    Context.Response.Redirect("/User/Profile");
+                    Context.Response.Redirect("/");
                 }
                 return AuthenticateResult.Success(ticket);
             }
@@ -126,7 +126,7 @@ namespace ShareResource
                 {
                     if (isLoginEndpoint)
                     {
-                        Context.Response.Redirect("/User/Profile");
+                        Context.Response.Redirect("/");
                     }
                     return verifyExpired;
                 }

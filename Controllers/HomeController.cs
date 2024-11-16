@@ -31,6 +31,10 @@ namespace ShareResource.Controllers
         {
             try
             {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                var userId = userIdClaim?.Value;
+               
+
                 if (page <= 0)
                 {
                     TempData["Error"] = "Invalid request";
@@ -40,9 +44,24 @@ namespace ShareResource.Controllers
                 {
                     OffsetPaginationParams offsetParams = new OffsetPaginationParams();
                     offsetParams.offset = (page - 1) * offsetParams.limit;
-                    var resources = await _accessService.GetSampleResource(offsetParams) as OffsetPaginationResult<Img>;
+                    var resources = await _accessService.GetSampleResource(offsetParams) as OffsetPaginationResult<Img>?? null;
                     var paginationViewModel = new PaginationViewModel() { limit = resources.limit, offset = resources.offset, totalItems = resources.totalItems, currentPage = (int)Math.Ceiling((decimal)resources.offset / resources.limit) + 1 };
                     var imgViewModel = _mapper.Map<List<Img>, List<ImgResultViewModel>>(resources.items!);
+                    if (!string.IsNullOrEmpty(userId))
+                    {
+                        var index = 0;
+                        resources.items.ForEach(t => {
+                            if (t.ImgLovers.Where(t => t.UserId == userId).Any())
+                            {
+                                imgViewModel[index].LikeState = true;
+                            }
+                            else
+                            {
+                                imgViewModel[index].LikeState = false;
+                            }
+                            index++;
+                            });
+                    }
                     var galleryViewModel = new GalleryViewModel() { Imgs = imgViewModel, Pagination = paginationViewModel };
                     return View("Explore", galleryViewModel);
                 }

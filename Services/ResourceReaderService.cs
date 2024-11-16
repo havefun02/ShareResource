@@ -26,6 +26,7 @@ namespace ShareResource.Services
         }
         public async Task<IPaginationResult<Img>> GetUserResources(IPaginationParams paginationParams, string userId)
         {
+
             var imgContext = _repository.GetDbSet();
             var query = imgContext.Include(i => i.User).Where(u => u.UserId == userId);
             var paginationResult = await this._paginationService.Paginate(query, paginationParams);
@@ -34,7 +35,7 @@ namespace ShareResource.Services
         public async Task<IPaginationResult<Img>> GetSampleResource(IPaginationParams paginationParams)
         {
             var imgContext = _repository.GetDbSet();
-            var query = imgContext.Include(i => i.User);
+            var query = imgContext.Include(i => i.User).Include(t => t.ImgLovers);
             var paginationResult = await this._paginationService.Paginate(query, paginationParams);
             return paginationResult;
         }
