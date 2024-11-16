@@ -1,6 +1,11 @@
 ﻿.main-page{
     padding:0 80px;
 }
+.btn-like-toggle.liked {
+    background-color: #007bff; /* Blue background for liked state */
+    color: white; /* White text for contrast */
+    border-color: #007bff;
+}
 .img-icon{
     width:30px;
     height:auto;

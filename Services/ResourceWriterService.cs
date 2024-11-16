@@ -5,6 +5,7 @@ using ShareResource.Exceptions;
 using ShareResource.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using CRUDFramework.Cores;
+using ShareResource.Models.Dtos;
 
 namespace ShareResource.Services
 {
@@ -15,7 +16,7 @@ namespace ShareResource.Services
 
 
 
-        public ResourceWriterService(IRepository<Img, AppDbContext> repository, IPaginationService<Img> paginationService)
+        public ResourceWriterService( IRepository<Img, AppDbContext> repository, IPaginationService<Img> paginationService)
         {
             _paginationService = paginationService;
             _repository = repository;
@@ -62,7 +63,44 @@ namespace ShareResource.Services
         }
 
        
+        public async Task UpdateState(string userId,LikeDto likeDto)
+        {
+            try
+            {
+                var context = this._repository.GetDbContext();
+                var user=await context.Users.Include(u=>u.UserImgs).SingleOrDefaultAsync(x => x.UserId == likeDto.userId);
+                if (user == null || user.UserImgs== null) { throw new NullReferenceException("Cant find resource"); }
+                var userImg = user.UserImgs.Where(i => i.ImgId == likeDto.resourceId).SingleOrDefault();
+                if (userImg == null) { throw new NullReferenceException("The post is not available anymore"); }
+                var likeImg=await context.ImgLovers.SingleOrDefaultAsync(t=>t.UserId==userId&&t.ImgId==likeDto.resourceId);
 
+                if (likeImg==null)
+                { 
+                    if (likeDto.state)
+                    {
+                        await context.ImgLovers.AddAsync(new ImgLovers() { ImgId = userImg.ImgId, UserId = userId });
+                        await context.SaveChangesAsync();
+                    }
+                    else
+                    throw new InvalidOperationException();
+                }
+                else
+                {
+                    if (likeDto.state)
+                    {
+                        throw new InvalidOperationException();
+                    }
+                    else
+                    {
+                        context.ImgLovers.Remove(likeImg);
+                        await context.SaveChangesAsync();
+                    }
+                }
+            }
+            catch {
+                throw;
+            }
+        }
         public async Task<Img> UploadResource(Img resource, string userId)
         {
             try

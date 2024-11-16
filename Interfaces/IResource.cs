@@ -1,4 +1,5 @@
 ﻿using CRUDFramework.Interfaces;
+using ShareResource.Models.Dtos;
 using ShareResource.Models.Entities;
 
 namespace ShareResource.Interfaces
@@ -17,5 +18,7 @@ namespace ShareResource.Interfaces
         public Task<T> UploadResource(T resource, string userId);
         public Task<int> DeleteResource(string resourceId,string userId);
         public Task<T> EditResource(T resource, string userId);
+        public Task UpdateState(string userId, LikeDto likeDto);
+
     }
 }

@@ -1,0 +1,7 @@
+﻿@model ShareResource.Models.ViewModels.LoginDataViewModel
+@{
+}
+ <form method="post" asp-action="Logout" asp-controller="Auth">
+    <span>Hello, @Model.UserName</span>
+    <button asp-action="Logout" asp-controller="Auth" class="btn">Logout</button>
+</form>

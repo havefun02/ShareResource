@@ -1,7 +1,11 @@
 ﻿@model ShareResource.Models.ViewModels.ImgResultViewModel
+@{
+    var isLogged = Context.Request.Cookies["isLogged"] == "Yes";
+        
+}
 <div class="col-md-3 mb-3">
-    <div class="card clickable-items" data-imgid="@Model.ImgId">
-        <img src="@Url.Content(@Model.FileUrl)" alt="@Model.FileName" class="card-img-top" />
+    <div class="card" data-imgid="@Model.ImgId">
+        <img src="@Url.Content(@Model.FileUrl)" alt="@Model.FileName" class="card-img-top clickable-items" />
 
         <div class="card-body">
             
@@ -18,20 +22,12 @@
                     Email: <a href="mailto:@Model.AuthorEmail">@Model.AuthorEmail</a>
                 </small>
             </p>
+            <button class="btn btn-outline-primary btn-like-toggle"  data-imgid="@Model.ImgId" data-userid="@Model.AuthorId">
+                <i class="fas fa-thumbs-up"></i> Like
+            </button>
+                <span class="like-count" data-imgid="@Model.ImgId"></span>
+            
         </div>
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        
-        $(document).on('click', '.clickable-items', function () {
-            function redirectToItem(imgId) {
-                const url = '/resources/' + imgId; // Use string concatenation
-                window.location.href = url;
-            }
-            const imgId = $(this).data('imgid');
-            redirectToItem(imgId);
-        });
-    </script>
-}

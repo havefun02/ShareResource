@@ -52,5 +52,6 @@ namespace ShareResource.Controllers
                 return View("Explore");
             }
         }
+
     }
 }

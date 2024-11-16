@@ -14,6 +14,7 @@ namespace ShareResource.Database
         public DbSet<Img> Imgs { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<ImgTags> ImgTags { get; set; }
+        public DbSet<ImgLovers> ImgLovers{ get; set; }
 
         public override int SaveChanges()
         {
@@ -129,7 +130,7 @@ namespace ShareResource.Database
 
             modelBuilder.Entity<ImgLovers>(entity => {
                 entity.HasKey(t => new { t.UserId, t.ImgId });
-                entity.HasOne(t=>t.User).WithMany(u=>u.ImgLovers).HasForeignKey(u=>u.ImgId);
+                entity.HasOne(t=>t.User).WithMany(u=>u.ImgLovers).HasForeignKey(u=>u.UserId);
                 entity.HasOne(t => t.Img).WithMany(i=>i.ImgLovers).HasForeignKey(i=>i.ImgId);
             });
 

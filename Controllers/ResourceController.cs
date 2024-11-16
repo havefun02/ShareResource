@@ -12,6 +12,7 @@ using ShareResource.Decorators;
 using CRUDFramework.Cores;
 using Microsoft.EntityFrameworkCore.Query;
 using NUglify;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 
 namespace ShareResource.Controllers
@@ -116,46 +117,7 @@ namespace ShareResource.Controllers
                 return RedirectToAction("GetUserProfile", "User");
             }
         }
-        [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> UploadChunk([FromForm] VidDto dto)
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            var userId = userIdClaim?.Value;
-
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                TempData["Error"] = "User not found. Please log in.";
-                return BadRequest(TempData["Error"]);
-            }
-            if (!ModelState.IsValid)
-            {
-                Console.WriteLine("Invalid model or content range");
-
-                TempData["Error"] = "Invalid model data.";
-                return BadRequest(TempData["Error"]);
-            }
-
-            if (dto.source == null)
-            {
-                Console.WriteLine("Invalid chunk or content range");
-
-                return BadRequest("Invalid chunk or content range");
-            }
-
-            var folderPath = _imageFolderPath + "/" + userId+"/videos"; // You might want to use a unique filename
-
-            Directory.CreateDirectory("wwwroot/" + folderPath);
-            var filePath = "wwwroot" + folderPath + "/" + dto.FileName + ".mp4";
-
-            using (var stream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Write))
-            {
-                stream.Seek(dto.start, SeekOrigin.Begin);
-                await dto.source.CopyToAsync(stream);
-            }
-            return Ok("Chunk uploaded");
-        }
-
+    
 
         /// <summary>
         /// Edit an existing image resource.
@@ -221,13 +183,43 @@ namespace ShareResource.Controllers
             }
         }
 
+        [Route("/api/v1/resources/like")]
+        [Authorize]
+        [HttpPost] 
+        public async Task<IActionResult> LikeImg([FromBody] LikeDto likeDto)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = userIdClaim?.Value;
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return BadRequest("Please login again");
+            }
+            if (!ModelState.IsValid) { 
+                return BadRequest("Invalid model");
+
+            }
+            try
+            {
+                await _service.UpdateState(userId, likeDto);
+                return Created();
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+
+        }
+
         /// <summary>
         /// Delete a specific image resource by ID.
         /// </summary>
         /// <param name="resourceId">The ID of the resource to delete.</param>
         /// <returns>Result of the delete operation.</returns>
-        [Authorize] // Only admin can delete
         [Route("/api/v1/resources/{resourceId}")]
+        /// 
+        [Authorize] // Only admin can delete
+        [HttpDelete]
         public async Task<IActionResult> DeleteResource(string resourceId)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);

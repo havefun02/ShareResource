@@ -20,6 +20,7 @@ using JwtCookiesScheme.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using static ShareResource.Policies.RBACPolicies;
+using Microsoft.AspNetCore.Identity;
 namespace ShareResource
 {
     public class Startup
@@ -34,6 +35,7 @@ namespace ShareResource
         {
 
             services.AddDbContext<AppDbContext>();
+
             services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
             //services.Configure<FormOptions>(options =>
             //{
@@ -65,7 +67,6 @@ namespace ShareResource
               .PersistKeysToFileSystem(new DirectoryInfo(@"C:\Temp\Keys"))
               .SetDefaultKeyLifetime(TimeSpan.FromDays(30));
             services.AddScoped<IUserService<User>, UserService>();
-            services.AddScoped<ITokenService<Token>, TokenService>();
             services.AddScoped<IEncryptionService, EncryptionService>();
             services.AddScoped<IAdminService<User>, UserService>();
             services.AddScoped<IRoleService<Role>, RoleService>();
@@ -73,9 +74,8 @@ namespace ShareResource
             services.AddScoped<IResourceReaderService<Img>, ResourceReaderService>();
             services.AddScoped<IResourceWriterService<Img>, ResourceWriterService>();
             services.AddScoped<IPaginationService<Img>, OffsetPaginationService<Img>>();
-            services.AddHttpContextAccessor();
+            services.AddScoped<ITokenService<Token>, TokenService>();
             services.AddSingleton<IJwtService<User>,JwtService>();
-
 
             services.AddCors(options =>
             {

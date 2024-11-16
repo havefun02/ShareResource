@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShareResource.Database;
 
@@ -10,9 +11,11 @@ using ShareResource.Database;
 namespace ShareResource.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241115090213_ImgLovers")]
+    partial class ImgLovers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -247,7 +250,7 @@ namespace ShareResource.Migrations
 
                     b.HasOne("ShareResource.Models.Entities.User", "User")
                         .WithMany("ImgLovers")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("ImgId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

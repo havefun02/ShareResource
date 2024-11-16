@@ -16,6 +16,8 @@ namespace ShareResource
         private readonly IJwtService<User> _jwtService;
         private readonly ITokenService<Token> _tokenService;
         private readonly IEncryptionService _encryptionService;
+        private string? refreshToken;
+        private string? accessToken;
 
         public AuthenticationScheme(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
@@ -29,34 +31,11 @@ namespace ShareResource
             _encryptionService = encryptionService;
             _jwtService = jwtService;
             _tokenService = tokenService;
+            refreshToken = "";
+            accessToken = "";
         }
-
-        bool NeedAuthorize(HttpContext context)
-        {
-            var endpoint = context.GetEndpoint();
-            if (endpoint == null) return false;
-
-            var controllerDescriptor = endpoint.Metadata
-                .GetMetadata<ControllerActionDescriptor>()
-                ?.ControllerTypeInfo;
-
-            var hasAuthorizeOnController = controllerDescriptor?
-                .GetCustomAttributes(typeof(AuthorizeAttribute), true)
-                .Any() ?? false;
-
-            var actionDescriptor = endpoint.Metadata
-                .GetMetadata<ControllerActionDescriptor>()?.MethodInfo;
-
-            var hasAuthorizeOnAction = actionDescriptor?
-                .GetCustomAttributes(typeof(AuthorizeAttribute), true)
-                .Any() ?? false;
-
-            return hasAuthorizeOnController || hasAuthorizeOnAction;
-        }
-
         private async Task<AuthenticateResult> HandleExpiredTokenAsync()
         {
-            var refreshToken = Context.Request.Cookies["refreshToken"];
             if (string.IsNullOrEmpty(refreshToken))
             {
                 return AuthenticateResult.Fail("Cannot find your refresh token");
@@ -64,7 +43,6 @@ namespace ShareResource
 
             try
             {
-                refreshToken = _encryptionService.DecryptData(refreshToken);
                 var tokenInfo = await _tokenService.GetTokenInfo(refreshToken);
                 if (tokenInfo == null || tokenInfo.ExpiredAt < DateTime.UtcNow ||tokenInfo.IsRevoked)
                 {
@@ -86,15 +64,8 @@ namespace ShareResource
                         HttpOnly = true,
                         SameSite = SameSiteMode.Strict,
                     });
-                    Context.Response.Cookies.Append("isLogged", "Yes", new CookieOptions
-                    {
-                        HttpOnly = true,
-                        //Secure = true,
-                        SameSite = SameSiteMode.Strict,
-                    });
                     var principal = _jwtService.ValidateAccessToken(newAccessToken);
                     var ticket = new AuthenticationTicket(principal, "JWT-COOKIES-SCHEME");
-
                     return AuthenticateResult.Success(ticket);
                 }
                 return AuthenticateResult.Fail("Failed to generate new access token");
@@ -120,76 +91,51 @@ namespace ShareResource
             Context.Response.Redirect("/");
             return Task.CompletedTask;
         }
+
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             var isLoginEndpoint = Context.Request.Path.StartsWithSegments("/auth/login");
-            if (NeedAuthorize(Context) || isLoginEndpoint)
+            accessToken = Context.Request.Cookies["accessToken"];
+            refreshToken = Context.Request.Cookies["refreshToken"];
+            if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(refreshToken))
             {
-                var token = Context.Request.Cookies["accessToken"];
-                var refresh = Context.Request.Cookies["refreshToken"];
-
-                if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(refresh))
+                return AuthenticateResult.Fail("No token provided");
+            }
+            try
+            {
+                accessToken = _encryptionService.DecryptData(accessToken);
+                refreshToken = _encryptionService.DecryptData(refreshToken);
+                var tokenInfo = await _tokenService.GetTokenInfo(refreshToken);
+                if (tokenInfo == null || tokenInfo.IsRevoked || tokenInfo.ExpiredAt< DateTime.UtcNow)
                 {
-                    Context.Response.Cookies.Delete("isLogged");
                     return AuthenticateResult.Fail("No token provided");
                 }
-                try
-                {
-                    token = _encryptionService.DecryptData(token);
-                    refresh=_encryptionService.DecryptData(refresh);
-                    var tokenInfo = await _tokenService.GetTokenInfo(refresh);
-                    if (tokenInfo == null || tokenInfo.IsRevoked || tokenInfo.ExpiredAt< DateTime.UtcNow)
-                    {
-                        Context.Response.Cookies.Delete("isLogged");
-                        return AuthenticateResult.Fail("No token provided");
-                    }
-                    var principal = _jwtService.ValidateAccessToken(token);
-                    var ticket = new AuthenticationTicket(principal, "JWT-COOKIES-SCHEME");
+                var principal = _jwtService.ValidateAccessToken(accessToken);
+                var ticket = new AuthenticationTicket(principal, "JWT-COOKIES-SCHEME");
 
-                    Context.Response.Cookies.Append("isLogged", "Yes", new CookieOptions
-                    {
-                        HttpOnly = true,
-                        //Secure = true,
-                        SameSite = SameSiteMode.Strict,
-                    });
+                if (isLoginEndpoint)
+                {
+                    Context.Response.Redirect("/User/Profile");
+                }
+                return AuthenticateResult.Success(ticket);
+            }
+            catch (SecurityTokenExpiredException)
+            {
+                var verifyExpired = await HandleExpiredTokenAsync();
+                if (verifyExpired.Succeeded)
+                {
                     if (isLoginEndpoint)
                     {
                         Context.Response.Redirect("/User/Profile");
                     }
-                    return AuthenticateResult.Success(ticket);
-                }
-                catch (SecurityTokenExpiredException)
-                {
-                    var verifyExpired = await HandleExpiredTokenAsync();
-                    if (verifyExpired.Succeeded)
-                    {
-
-                        if (isLoginEndpoint)
-                        {
-                            Context.Response.Cookies.Append("isLogged", "Yes", new CookieOptions
-                            {
-                                HttpOnly = true,
-                                //Secure = true,
-                                SameSite = SameSiteMode.Strict,
-                            });
-
-                            Context.Response.Redirect("/User/Profile");
-                        }
-                        return verifyExpired;
-                    }
-                    Context.Response.Cookies.Delete("isLogged");
                     return verifyExpired;
+                }
+                return verifyExpired;
 
-                }
-                catch (Exception ex)
-                {
-                    Context.Response.Cookies.Delete("isLogged");
-                    return AuthenticateResult.Fail($"Authentication failed: {ex.Message}");
-                }
             }
-            else
+            catch (Exception ex)
             {
-                return AuthenticateResult.NoResult();
+                return AuthenticateResult.Fail($"Authentication failed: {ex.Message}");
             }
         }
     }
