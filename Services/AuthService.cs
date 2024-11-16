@@ -19,7 +19,7 @@ namespace ShareResource.Services
 
         public AuthService(IRepository<User, AppDbContext> userRepository, IRepository<Role, AppDbContext> roleRepository, IJwtService<User> jwtService)
         {
-            _roleRepository= roleRepository;
+            _roleRepository = roleRepository;
             _userRepository = userRepository;
             _jwtService = jwtService;
         }

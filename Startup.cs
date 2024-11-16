@@ -61,11 +61,11 @@ namespace ShareResource
             services.AddScoped<IAuthorizationHandler, RoleAuthorizationHandler<AdminOnlyRequirement>>();
             services.AddScoped<IAuthorizationHandler, RoleAuthorizationHandler<OwnerOnlyRequirement>>();
             services.AddScoped<IAuthorizationHandler, RoleAuthorizationHandler<UserSelfDeleteRequirement>>();
-
             services.AddDataProtection()
                .SetApplicationName("AuthenticationApp")
               .PersistKeysToFileSystem(new DirectoryInfo(@"C:\Temp\Keys"))
               .SetDefaultKeyLifetime(TimeSpan.FromDays(30));
+            services.AddScoped<ILockoutService, LockoutService>();
             services.AddScoped<IUserService<User>, UserService>();
             services.AddScoped<IEncryptionService, EncryptionService>();
             services.AddScoped<IAdminService<User>, UserService>();

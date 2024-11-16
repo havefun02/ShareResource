@@ -46,6 +46,12 @@ namespace ShareResource.Controllers
         {
             try
             {
+                var sessionId = HttpContext.Request.Cookies["ssid"];
+                if (string.IsNullOrEmpty(sessionId))
+                {
+                    View("Login", loginDto);
+                }
+
                 var (access, refresh) = await _authService.Login(loginDto);
                 if (access== null ||refresh==null) return View("Login",loginDto);
                 HttpContext.Response.Cookies.Append("accessToken", _encryptionService.EncryptData(access), new CookieOptions
