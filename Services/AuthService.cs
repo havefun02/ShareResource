@@ -1,5 +1,4 @@
 ﻿using ShareResource.Interfaces;
-using CRUDFramework.Cores;
 using CRUDFramework.Interfaces;
 using ShareResource.Models.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +6,7 @@ using ShareResource.Models.Dtos;
 using Microsoft.AspNetCore.Identity;
 using ShareResource.Database;
 using ShareResource.Exceptions;
+using CRUDFramework;
 
 
 namespace ShareResource.Services
@@ -19,7 +19,7 @@ namespace ShareResource.Services
 
         public AuthService(IRepository<User, AppDbContext> userRepository, IRepository<Role, AppDbContext> roleRepository, IJwtService<User> jwtService)
         {
-            _roleRepository = roleRepository;
+            _roleRepository= roleRepository;
             _userRepository = userRepository;
             _jwtService = jwtService;
         }
@@ -55,13 +55,16 @@ namespace ShareResource.Services
                     user.UserToken.RefreshToken = refreshToken.token!;
                     user.UserToken.ExpiredAt = refreshToken.expiredAt;
                     user.UserToken.IsRevoked = false;
-                    await _userRepository.Update(user);
+                    _userRepository.Update(user);
+                    await _userRepository.SaveAsync();
                 }
                 else
                 {
                     var token = new Token() { IsRevoked=false, RefreshToken = refreshToken.token, ExpiredAt = refreshToken.expiredAt, UserId = user.UserId };
                     user.UserToken = token;
-                    await _userRepository.Update(user);
+                    _userRepository.Update(user);
+                    await _userRepository.SaveAsync();
+
                 }
             }
             catch (Exception ex)
@@ -97,11 +100,9 @@ namespace ShareResource.Services
                 var passwordHasher = new PasswordHasher<User>();
                 newUser.UserPassword = passwordHasher.HashPassword(newUser, user.UserPassword);
 
-                var userCreated = await _userRepository.CreateAsync(newUser);
-                if (userCreated != null)
+                await _userRepository.CreateAsync(newUser);
+                await _userRepository.SaveAsync();
                 return true;
-
-                return false;
             }
             catch(Exception) {
                 return false;
@@ -110,53 +111,67 @@ namespace ShareResource.Services
 
         public async Task<bool> UpdatePassword(UpdatePasswordDto dto, string userId)
         {
-            var userContext = _userRepository.GetDbSet();
-
-
-            var user = await userContext.Include(u => u.UserToken).SingleOrDefaultAsync(u => u.UserId == userId); // Assuming this method exists
-
-            if (user == null)
+            try
             {
-                throw new ArgumentException("Invalid email or password.");
-            }
+                var userContext = _userRepository.GetDbSet();
 
-            var passwordHasher = new PasswordHasher<User>();
-            user.UserPassword = passwordHasher.HashPassword(user, dto.NewPassword);
-            if (user.UserToken != null) {
-                user.UserToken!.IsRevoked = true;
+
+                var user = await userContext.Include(u => u.UserToken).SingleOrDefaultAsync(u => u.UserId == userId); // Assuming this method exists
+
+                if (user == null)
+                {
+                    throw new ArgumentException("Invalid email or password.");
+                }
+
+                var passwordHasher = new PasswordHasher<User>();
+                user.UserPassword = passwordHasher.HashPassword(user, dto.NewPassword);
+                if (user.UserToken != null)
+                {
+                    user.UserToken!.IsRevoked = true;
+                }
+                else
+                {
+                    throw new InvalidOperationException("Invalid user token");
+                }
+                _userRepository.Update(user);
+                await _userRepository.SaveAsync();
+                return true;
             }
-            else
+            catch(Exception ex)
             {
-                throw new InvalidOperationException("Invalid user token");
+                return false;
             }
-            var updateResult = await _userRepository.Update(user);
-            if (updateResult == null) throw new InvalidOperationException("Internal error getting user data");
-            return true;
         }
 
         public async Task<bool> Logout(string userId)
         {
-            var userContext = _userRepository.GetDbSet();
-
-
-            var user = await userContext.Include(u => u.UserToken).SingleOrDefaultAsync(u => u.UserId == userId); // Assuming this method exists
-
-            if (user == null)
+            try
             {
-                throw new ArgumentException("Invalid email or password.");
-            }
+                var userContext = _userRepository.GetDbSet();
 
-            if (user.UserToken != null)
-            {
-                user.UserToken!.IsRevoked = true;
+
+                var user = await userContext.Include(u => u.UserToken).SingleOrDefaultAsync(u => u.UserId == userId); // Assuming this method exists
+
+                if (user == null)
+                {
+                    throw new ArgumentException("Invalid email or password.");
+                }
+
+                if (user.UserToken != null)
+                {
+                    user.UserToken!.IsRevoked = true;
+                }
+                else
+                {
+                    throw new InvalidOperationException("Invalid user token");
+                }
+                _userRepository.Update(user);
+                await _userRepository.SaveAsync();
+                return true;
             }
-            else
-            {
-                throw new InvalidOperationException("Invalid user token");
+            catch (Exception) { 
+                return false;
             }
-            var updateResult = await _userRepository.Update(user);
-            if (updateResult == null) throw new InvalidOperationException("Internal error getting user data");
-            return true;
         }
         public async Task<bool> ChangePassword(ChangePasswordDto dto)
         {
@@ -178,11 +193,11 @@ namespace ShareResource.Services
                 }
 
                 user.UserPassword = passwordHasher.HashPassword(user, dto.NewPassword);
-                var updateResult=await _userRepository.Update(user);
-                if (updateResult == null) throw new InvalidOperationException("Internal error while changing password");
+                _userRepository.Update(user);
+                await _userRepository.SaveAsync();
                 return true;
             }
-            catch { throw; }
+            catch(Exception) { return false; }
         }
 
     }

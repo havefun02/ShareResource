@@ -4,8 +4,8 @@ using ShareResource.Interfaces;
 using ShareResource.Exceptions;
 using ShareResource.Models.Entities;
 using Microsoft.EntityFrameworkCore;
-using CRUDFramework.Cores;
 using ShareResource.Models.Dtos;
+using CRUDFramework;
 
 namespace ShareResource.Services
 {
@@ -22,23 +22,31 @@ namespace ShareResource.Services
             _repository = repository;
         }
 
-        public async Task<int> DeleteResource(string resourceId, string userId)
+        public async Task DeleteResource(string resourceId, string userId)
         {
-            var resource = await _repository.FindOneById(resourceId);
-            if (resource == null)
+            try
             {
-                throw new ArgumentException("Resource not found");
-            }
+                var resource = await _repository.FindOneById(resourceId);
+                if (resource == null)
+                {
+                    throw new ArgumentException("Resource not found");
+                }
 
-            if (resource.UserId != userId)
+                if (resource.UserId != userId)
+                {
+                    throw new UnauthorizedAccessException("User not authorized to delete this resource");
+                }
+
+                await _repository.Delete(resourceId);
+                await _repository.SaveAsync();
+            }
+            catch
             {
-                throw new UnauthorizedAccessException("User not authorized to delete this resource");
+                throw;
             }
-
-            return await _repository.Delete(resourceId);
         }
 
-        public async Task<Img> EditResource(Img resource, string userId)
+        public async Task EditResource(Img resource, string userId)
         {
             var existingResource = await _repository.FindOneById(resource.ImgId);
             if (existingResource == null)
@@ -58,8 +66,7 @@ namespace ShareResource.Services
             //existingResource.Description = resource.Description;
             //existingResource.IsPrivate = resource.IsPrivate;
 
-            var updateResult=await _repository.Update(existingResource);
-            return updateResult;
+            _repository.Update(existingResource);
         }
 
        
@@ -101,14 +108,13 @@ namespace ShareResource.Services
                 throw;
             }
         }
-        public async Task<Img> UploadResource(Img resource, string userId)
+        public async Task UploadResource(Img resource, string userId)
         {
             try
             {
 
                 resource.UserId = userId;
-                var createdResult = await _repository.CreateAsync(resource);
-                return createdResult;
+                await _repository.CreateAsync(resource);
             }
             catch (Exception ex) {
                 throw new InternalException("Save img failed due to", ex);

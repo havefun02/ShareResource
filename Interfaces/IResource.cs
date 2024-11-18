@@ -1,4 +1,5 @@
-﻿using CRUDFramework.Interfaces;
+﻿using CRUDFramework;
+using CRUDFramework.Interfaces;
 using ShareResource.Models.Dtos;
 using ShareResource.Models.Entities;
 
@@ -15,9 +16,9 @@ namespace ShareResource.Interfaces
     }
     public interface IResourceWriterService<T> where T : class
     {
-        public Task<T> UploadResource(T resource, string userId);
-        public Task<int> DeleteResource(string resourceId,string userId);
-        public Task<T> EditResource(T resource, string userId);
+        public Task UploadResource(T resource, string userId);
+        public Task DeleteResource(string resourceId,string userId);
+        public Task EditResource(T resource, string userId);
         public Task UpdateState(string userId, LikeDto likeDto);
 
     }

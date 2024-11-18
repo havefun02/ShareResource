@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
+using CRUDFramework;
 
 namespace ShareResource.Services
 {
@@ -37,7 +38,7 @@ namespace ShareResource.Services
         /// <returns>The updated User entity.</returns>
         /// <exception cref="ArgumentNullException">Thrown when userDto is null.</exception>
         /// <exception cref="ArgumentException">Thrown when user not found during update.</exception>
-        public async Task<User> EditProfile(UserDto userDto,string userId)
+        public async Task EditProfile(UserDto userDto,string userId)
         {
             try
             {
@@ -50,9 +51,8 @@ namespace ShareResource.Services
                 userData.UserName = userDto.UserName;
                 userData.UserPhone = userDto.UserPhone;
                 userData.UserIcon = userDto.UserIcon;
-                var user = await _userRepository.Update(userData);
-                if (user == null) { throw new InvalidOperationException(); }
-                return user;
+                _userRepository.Update(userData);
+                await _userRepository.SaveAsync();
             }
             catch(Exception ex) { throw new InternalException("Edit profile failed. ", ex); }
         }
@@ -74,13 +74,11 @@ namespace ShareResource.Services
                 {
                     throw new InvalidOperationException("Cannot delete admin account");
                 }
-                var status = await _userRepository.Delete(userId);
-                if (status == 0)
-                {
-                    throw new ArgumentException("User not found or could not be deleted.");
-                }
+                await _userRepository.Delete(userId);
+                await _userRepository.SaveAsync();
+
             }
-            catch(Exception ex) {
+            catch (Exception ex) {
                 throw new InternalException("Fail to delete ", ex);
             }
 
@@ -137,7 +135,8 @@ namespace ShareResource.Services
                 if (user == null) throw new ArgumentException("Cannot update user due to mismatch permission or user does not exist");
 
                 user.UserRoleId = updateUserRoleDto.RoleId;
-                await _userRepository.Update(user);
+                _userRepository.Update(user);
+                await _userRepository.SaveAsync();
             }
             catch(Exception ex)
             {
@@ -174,11 +173,8 @@ namespace ShareResource.Services
                 if (user == null) throw new ArgumentException("Cannot delete user due to mismatch permission or user does not exist");
 
                 // Delete user account
-                var status = await _userRepository.Delete(user.UserId!);
-                if (status == 0)
-                {
-                    throw new InvalidOperationException("User could not be deleted.");
-                }
+                await _userRepository.Delete(user.UserId!);
+                await _userRepository.SaveAsync();
             }
             catch (Exception ex)
             {

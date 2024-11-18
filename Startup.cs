@@ -4,23 +4,17 @@ using ShareResource.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication;
-using CRUDFramework.Cores;
-using CRUDFramework.Interfaces;
 using ShareResource.Interfaces;
 using ShareResource.Services;
 using ShareResource.Models.Entities;
 using ShareResource.Middlewares;
 using ShareResource.Models;
 using AutoMapper;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http.Features;
 using JwtCookiesScheme.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using static ShareResource.Policies.RBACPolicies;
-using Microsoft.AspNetCore.Identity;
+using CRUDFramework;
 namespace ShareResource
 {
     public class Startup
@@ -61,11 +55,11 @@ namespace ShareResource
             services.AddScoped<IAuthorizationHandler, RoleAuthorizationHandler<AdminOnlyRequirement>>();
             services.AddScoped<IAuthorizationHandler, RoleAuthorizationHandler<OwnerOnlyRequirement>>();
             services.AddScoped<IAuthorizationHandler, RoleAuthorizationHandler<UserSelfDeleteRequirement>>();
+
             services.AddDataProtection()
                .SetApplicationName("AuthenticationApp")
               .PersistKeysToFileSystem(new DirectoryInfo(@"C:\Temp\Keys"))
               .SetDefaultKeyLifetime(TimeSpan.FromDays(30));
-            services.AddScoped<ILockoutService, LockoutService>();
             services.AddScoped<IUserService<User>, UserService>();
             services.AddScoped<IEncryptionService, EncryptionService>();
             services.AddScoped<IAdminService<User>, UserService>();

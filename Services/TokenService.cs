@@ -22,6 +22,7 @@ namespace JwtCookiesScheme.Services
         {
             try
             {
+
                 var dbContext = _tokenRepo.GetDbSet();
                 var tokenResult = await dbContext.Include(t => t.User).SingleOrDefaultAsync(t => t.RefreshToken == token);
                 if (tokenResult == null) throw new ArgumentException("Can not find token");
@@ -39,8 +40,9 @@ namespace JwtCookiesScheme.Services
                 var newResetToken = _jwtService.GenerateRefreshToken();
                 token.RefreshToken = newResetToken.token;
                 token.ExpiredAt = newResetToken.expiredAt;
-                var updatedToken = await _tokenRepo.Update(token);
-                return updatedToken;
+                _tokenRepo.Update(token);
+                await _tokenRepo.SaveAsync();
+                return token;
             }
             catch (Exception ex)
             {

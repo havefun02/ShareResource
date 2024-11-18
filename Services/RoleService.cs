@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CRUDFramework;
 using CRUDFramework.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using ShareResource.Database;
@@ -22,48 +23,61 @@ namespace ShareResource.Services
             _rolePermissionsRepository = rolePermissionsRepository;
             _mapper = mapper;
         }
-        public async Task<Role> CreateRole(RoleDto roleDto, string adminId)
+        public async Task CreateRole(RoleDto roleDto, string adminId)
         {
-            if (roleDto == null || roleDto.RoleName == string.Empty || roleDto.RolePermissionsId==null)
+            try
             {
-                throw new ArgumentException("Invalid role data.");
-            }
-            var roleId=Guid.NewGuid().ToString();   
-            var rolePermissions = new List<RolePermission>();
-            foreach (var p in roleDto.RolePermissionsId)
-            {
-                var rp=new RolePermission();
-                rp.RoleId= roleId;
-                rp.PermissionId=p;
-                rolePermissions.Add(rp);
-            }
-            var newRole = new Role
-            {
-                RoleId = roleId,
-                RoleName = roleDto.RoleName,
-                RolePermissions = rolePermissions // Assuming RoleDto contains a list of permissions
-            };
+                if (roleDto == null || roleDto.RoleName == string.Empty || roleDto.RolePermissionsId == null)
+                {
+                    throw new ArgumentException("Invalid role data.");
+                }
+                var roleId = Guid.NewGuid().ToString();
+                var rolePermissions = new List<RolePermission>();
+                foreach (var p in roleDto.RolePermissionsId)
+                {
+                    var rp = new RolePermission();
+                    rp.RoleId = roleId;
+                    rp.PermissionId = p;
+                    rolePermissions.Add(rp);
+                }
+                var newRole = new Role
+                {
+                    RoleId = roleId,
+                    RoleName = roleDto.RoleName,
+                    RolePermissions = rolePermissions // Assuming RoleDto contains a list of permissions
+                };
 
-            var createdRole = await _roleRepository.CreateAsync(newRole);
-            return createdRole;
+                await _roleRepository.CreateAsync(newRole);
+                await _roleRepository.SaveAsync();
+            }
+            catch
+            {
+                throw;
+            }
         }
 
-        public async Task<int> DeleteRole(string roleId, string adminId)
+        public async Task DeleteRole(string roleId, string adminId)
         {
-            if (string.IsNullOrWhiteSpace(roleId))
+            try
             {
-                throw new ArgumentException("Role ID cannot be null or empty.");
-            }
+                if (string.IsNullOrWhiteSpace(roleId))
+                {
+                    throw new ArgumentException("Role ID cannot be null or empty.");
+                }
 
-            var roleToDelete = await _roleRepository.FindOneById(roleId);
-            if (roleToDelete == null)
+                var roleToDelete = await _roleRepository.FindOneById(roleId);
+                if (roleToDelete == null)
+                {
+                    throw new KeyNotFoundException($"Role with ID {roleId} not found.");
+                }
+
+                await _roleRepository.Delete(roleToDelete.RoleId!);
+                await _roleRepository.SaveAsync();
+            }
+            catch
             {
-                throw new KeyNotFoundException($"Role with ID {roleId} not found.");
+                throw;
             }
-
-            var status=await _roleRepository.Delete(roleToDelete.RoleId!);
-            if (status==0) { throw new InvalidOperationException("Cant delete the role"); }
-            return status;
         }
 
         public async Task<List<Role>> GetRoles(string adminId)
@@ -73,7 +87,7 @@ namespace ShareResource.Services
             return roles;
         }
 
-        public async Task<Role> UpdateRole(UpdateRoleDto updateRole,string roleId, string adminId)
+        public async Task UpdateRole(UpdateRoleDto updateRole,string roleId, string adminId)
         {
             if (updateRole == null || string.IsNullOrWhiteSpace(updateRole.RoleName)|| string.IsNullOrWhiteSpace(roleId))
             {
@@ -109,14 +123,14 @@ namespace ShareResource.Services
             {
                 var deleteResult = await rpContext.Where(rp => rp.PermissionId == permission && rp.RoleId == roleId).ExecuteDeleteAsync();
             }
-            var newRole = await _roleRepository.Update(roleToUpdate);
+            _roleRepository.Update(roleToUpdate);
+            await _roleRepository.SaveAsync();
             var roleDbContext = _roleRepository.GetDbSet();
             var roles = await roleDbContext.Include(r => r.RolePermissions!).SingleOrDefaultAsync(rp => rp.RoleId == roleId);
             if (roles == null)
             {
                 throw new InvalidOperationException("Error occured while updating role");
             }
-            return roles;
         }
     }
 }

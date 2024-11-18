@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using CRUDFramework.Cores;
+using CRUDFramework;
 using Microsoft.AspNetCore.Mvc;
 using ShareResource.Interfaces;
 using ShareResource.Models.Dtos;
@@ -33,8 +33,6 @@ namespace ShareResource.Controllers
             {
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 var userId = userIdClaim?.Value;
-               
-
                 if (page <= 0)
                 {
                     TempData["Error"] = "Invalid request";
@@ -47,7 +45,7 @@ namespace ShareResource.Controllers
                     var resources = await _accessService.GetSampleResource(offsetParams) as OffsetPaginationResult<Img>?? null;
                     var paginationViewModel = new PaginationViewModel() { limit = resources.limit, offset = resources.offset, totalItems = resources.totalItems, currentPage = (int)Math.Ceiling((decimal)resources.offset / resources.limit) + 1 };
                     var imgViewModel = _mapper.Map<List<Img>, List<ImgResultViewModel>>(resources.items!);
-                    if (!string.IsNullOrEmpty(userId))
+                    if (!string.IsNullOrEmpty(userId) && User.Identity.IsAuthenticated)
                     {
                         var index = 0;
                         resources.items.ForEach(t => {

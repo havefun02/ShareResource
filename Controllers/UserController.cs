@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using CRUDFramework.Cores;
+using CRUDFramework;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -107,7 +107,7 @@ namespace ShareResource.Controllers
             try
             {
                 var userData = _mapper.Map<UserDto>(userUpdateViewModel);
-                var updatedUser = await _userService.EditProfile(userData, userId);
+                var updatedUser = _userService.EditProfile(userData, userId);
                 return RedirectToAction("GetUserProfile", "User");
             }
             catch (Exception)

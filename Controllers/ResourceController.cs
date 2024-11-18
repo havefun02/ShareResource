@@ -9,10 +9,9 @@ using AutoMapper;
 using System.Security.Claims;
 using ShareResource.Models.ViewModels;
 using ShareResource.Decorators;
-using CRUDFramework.Cores;
 using Microsoft.EntityFrameworkCore.Query;
-using NUglify;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using CRUDFramework;
 
 
 namespace ShareResource.Controllers
@@ -105,7 +104,7 @@ namespace ShareResource.Controllers
                 }
                 var imgToUpload = _mapper.Map<Img>(fileMeta);
                 imgToUpload.FileUrl = filePath;
-                var uploadedResource = await _service.UploadResource(imgToUpload, userId);
+                await _service.UploadResource(imgToUpload, userId);
                 TempData["Success"] = "Created success.";
 
                 return RedirectToAction("GetUserProfile", "User");
@@ -145,7 +144,7 @@ namespace ShareResource.Controllers
             {
                 var imgToUpdate = _mapper.Map<Img>(resource);
                 imgToUpdate.ImgId = resourceId;
-                var updatedResource = await _service.EditResource(imgToUpdate, userId);
+                await _service.EditResource(imgToUpdate, userId);
                 return Created($"/api/v1/resources/{resourceId}",new {redirectUrl="/" });
             }
             catch (Exception ex)
@@ -231,11 +230,7 @@ namespace ShareResource.Controllers
 
             try
             {
-                var result = await _service.DeleteResource(resourceId, userId);
-                if (result == 0) // Assuming 0 indica   tes failure to delete
-                {
-                    return NoContent();
-                }
+                await _service.DeleteResource(resourceId, userId);
                 return Created($"/api/v1/resources/{resourceId}", new {redirectUrl="/"});
 
             }

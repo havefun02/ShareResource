@@ -6,7 +6,7 @@ namespace ShareResource.Interfaces
     public interface IUserService<T> where T : 
         User
     {
-        public Task<T> EditProfile(UserDto userDto,string UserId);
+        public Task EditProfile(UserDto userDto,string UserId);
         public Task DeleteProfile(string userId);
         public Task<T> GetUserProfile(string userId);
     }

@@ -1,4 +1,4 @@
-﻿using CRUDFramework.Cores;
+﻿using CRUDFramework;
 using CRUDFramework.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using ShareResource.Database;
@@ -13,7 +13,7 @@ namespace ShareResource.Services
         private readonly IPaginationService<Img> _paginationService;
         public ResourceReaderService(IRepository<Img, AppDbContext> repository, IPaginationService<Img> paginationService)
         {
-            _paginationService = paginationService;
+            _paginationService = paginationService  ;
             _repository = repository;
         }
 
@@ -26,10 +26,10 @@ namespace ShareResource.Services
         }
         public async Task<IPaginationResult<Img>> GetUserResources(IPaginationParams paginationParams, string userId)
         {
-
             var imgContext = _repository.GetDbSet();
-            var query = imgContext.Include(i => i.User).Where(u => u.UserId == userId);
-            var paginationResult = await this._paginationService.Paginate(query, paginationParams);
+            var userContext=_repository.GetDbContext();
+            var userImg = await userContext.Users.Where(u => u.UserId == userId).Include(u => u.UserImgs).ThenInclude(u => u.ImgLovers).Select(u => u.UserImgs).SingleOrDefaultAsync();
+            var paginationResult =  _paginationService.Paginate(userImg.AsEnumerable<Img>(), paginationParams);
             return paginationResult;
         }
         public async Task<IPaginationResult<Img>> GetSampleResource(IPaginationParams paginationParams)
@@ -56,5 +56,6 @@ namespace ShareResource.Services
             }
             return resource;
         }
+
     }
 }

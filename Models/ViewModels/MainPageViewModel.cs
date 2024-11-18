@@ -1,6 +1,4 @@
-﻿using CRUDFramework.Cores;
-
-namespace ShareResource.Models.ViewModels
+﻿namespace ShareResource.Models.ViewModels
 {
     public class MainPageViewModel
     {

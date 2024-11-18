@@ -32,9 +32,8 @@ namespace ShareResource.Controllers
             }
             try
             {
-                var deleteStatus = await _roleService.DeleteRole(roleId, userId);
-                if (deleteStatus != 0) return Ok("Delete role successfully");
-                else return BadRequest("Cant not delete the role");
+                 await _roleService.DeleteRole(roleId, userId);
+                return Ok("Delete role successfully");
             }
             catch (Exception ex)
             {
@@ -64,7 +63,7 @@ namespace ShareResource.Controllers
         }
         [Authorize]
         [HttpPut("/role-managements/{roleId}")]
-        public async Task<ActionResult<RoleResultDto>> UpdateRole(string roleId, [FromBody] UpdateRoleDto updateRoleDto)
+        public async Task<IActionResult> UpdateRole(string roleId, [FromBody] UpdateRoleDto updateRoleDto)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             var userId = userIdClaim?.Value;
@@ -79,17 +78,8 @@ namespace ShareResource.Controllers
             }
             try
             {
-                var updateStatus = await _roleService.UpdateRole(updateRoleDto, roleId, userId);
-                if (updateStatus != null)
-                {
-
-                    var roleResult = _mapper.Map<RoleResultDto>(updateStatus);
-                    return Ok(roleResult);
-                }
-                else
-                {
-                    return BadRequest();
-                }
+                await _roleService.UpdateRole(updateRoleDto, roleId, userId);
+                return Ok();
             }
             catch (Exception ex)
             {
@@ -113,13 +103,8 @@ namespace ShareResource.Controllers
 
             try
             {
-                var createStatus = await _roleService.CreateRole(roleDto, userId);
-                if (createStatus != null)
-                {
-                    var roleResult = _mapper.Map<RoleResultDto>(createStatus);
-                    return Ok(roleResult);
-                }
-                else { return BadRequest(); }
+                await _roleService.CreateRole(roleDto, userId);
+                return Ok();
             }
             catch (Exception ex)
             {

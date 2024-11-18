@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using CRUDFramework.Cores;
 using Microsoft.AspNetCore.Http;
 using ShareResource.Models.Dtos;
 using ShareResource.Models.Entities;
