@@ -7,6 +7,8 @@ namespace ShareResource.Interfaces
         User
     {
         public Task EditProfile(UserDto userDto,string UserId);
+        public Task<Img> GetUserFile(string userId,string fileId);
+
         public Task DeleteProfile(string userId);
         public Task<T> GetUserProfile(string userId);
     }
