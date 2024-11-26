@@ -20,16 +20,17 @@ namespace ShareResource.Services
         public async Task<IPaginationResult<Img>> GetPublicUserResources(IPaginationParams paginationParams, string userId)
         {
             var imgContext = _repository.GetDbSet();
-            var query = imgContext.Include(i => i.User).Where(u => u.UserId == userId && u.IsPrivate==false);
+            var query = imgContext.Include(i=>i.ImgLovers).Where(u => u.UserId == userId && u.IsPrivate==false);
             var paginationResult =await this._paginationService.Paginate(query, paginationParams);
             return paginationResult;
         }
         public async Task<IPaginationResult<Img>> GetUserResources(IPaginationParams paginationParams, string userId)
         {
             var imgContext = _repository.GetDbSet();
-            var userContext=_repository.GetDbContext();
-            var userImg = await userContext.Users.Where(u => u.UserId == userId).Include(u => u.UserImgs).ThenInclude(u => u.ImgLovers).Select(u => u.UserImgs).SingleOrDefaultAsync();
-            var paginationResult =  _paginationService.Paginate(userImg.AsEnumerable<Img>(), paginationParams);
+            var userImg= imgContext.Include(il=>il.ImgLovers).Where(u=>u.UserId == userId);
+            var paginationResult = await _paginationService.Paginate(userImg, paginationParams);
+            if (paginationResult == null)
+                throw new NotFoundException("Can not find result");
             return paginationResult;
         }
         public async Task<IPaginationResult<Img>> GetSampleResource(IPaginationParams paginationParams)
