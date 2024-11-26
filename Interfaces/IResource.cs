@@ -11,6 +11,8 @@ namespace ShareResource.Interfaces
         public Task<T> GetResourceById(string resourceId);
         public Task<IPaginationResult<T>> GetPublicUserResources(IPaginationParams paginationParams,string userId);
         public Task<IPaginationResult<T>> GetUserResources(IPaginationParams paginationParams, string userId);
+        public Task<List<T>> GetUserResources(string userId);
+
 
 
     }
