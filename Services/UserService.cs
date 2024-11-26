@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using CRUDFramework;
+using System.Diagnostics;
 
 namespace ShareResource.Services
 {
@@ -18,34 +19,23 @@ namespace ShareResource.Services
     {
         private readonly IRepository<User, AppDbContext> _userRepository;
         private readonly IRepository<Role, AppDbContext> _roleRepository;
+        
         private readonly IMapper _mapper;
 
         public UserService(
+
             IRepository<User, AppDbContext> userRepository,
             IRepository<Role, AppDbContext> roleRepository,
             IMapper mapper
             )
         {
+
             _mapper = mapper;
             _userRepository = userRepository;
             _roleRepository = roleRepository;
         }
 
-        public async Task<Img> GetUserFile(string userId, string fileId)
-        {
-            var context = _userRepository.GetDbSet();
-            var user=await context.Where(u=>u.UserId == userId).Include(u=>u.UserImgs).FirstOrDefaultAsync();
-            if (user == null) {
-                throw new NullReferenceException("User is null");
-            }
-
-            var file=user.UserImgs?.Where(t=>t.ImgId==fileId).FirstOrDefault();
-            if (file == null) {
-                throw new NotFoundException("File not found");
-            }
-            return file;
-
-        }
+      
 
         /// <summary>
         /// Edits the user profile based on the provided UserDto.

@@ -43,11 +43,11 @@ namespace ShareResource.Services
         {
             var imgContext = _repository.GetDbSet();
 
-            var resource = await imgContext.Include(i => i.User).SingleOrDefaultAsync(r => r.ImgId == resourceId);
+            var resource = await imgContext.SingleOrDefaultAsync(r => r.ImgId == resourceId);
 
             if (resource == null)
             {
-                throw new ArgumentException("Resource not found");
+                throw new NullReferenceException("Resource not found");
             }
 
             if (resource.IsPrivate)
@@ -56,6 +56,5 @@ namespace ShareResource.Services
             }
             return resource;
         }
-
     }
 }

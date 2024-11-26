@@ -11,25 +11,27 @@ namespace ShareResource.Controllers
     public class FileController : ControllerBase
     {
         private readonly IUserService<User> _userService;
-        public FileController(IUserService<User> userService)
+        private readonly IResourceReaderService<Img> _resourceService;
+
+        public FileController(IUserService<User> userService, IResourceReaderService<Img> resourceService)
         {
             _userService = userService;
+            _resourceService = resourceService;
         }
-        [HttpGet("file/{userId}/{fileId}")]
-        public async Task<IActionResult> DownloadFile( string userId,string fileId )
+        [HttpGet("file/{fileId}")]
+        public async Task<IActionResult> DownloadFile(string fileId )
         {
-            var file = await _userService.GetUserFile(userId, fileId);
+            var file = await _resourceService.GetResourceById(fileId);
             Console.WriteLine(file.FileUrl);
             var filePath="wwwroot"+file.FileUrl;
             if (!System.IO.File.Exists(filePath))
             {
-                return NotFound();  // File not found, return 404
+                return NotFound();  
             }
             var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
 
-            string contentType = "application/octet-stream"; // Default binary file type
+            string contentType = "application/octet-stream"; 
             string fileName = Path.GetFileName(filePath);
-
             return File(stream, contentType, fileName);
         }
     }
