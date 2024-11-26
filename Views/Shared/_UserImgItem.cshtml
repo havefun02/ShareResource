@@ -10,6 +10,8 @@
                 <button class="btn btn-sm btn-outline-secondary btn-rename ms-2" data-imgid="@Model.ImgId">Rename</button>
             </div>
             <p class="card-text">Uploaded on: @Model.UploadDate.ToString("dd MMM yyyy")</p>
+            <p class="card-text">Number of Like: @Model.NumberOfLikes</p>
+
             <button type="button" id="delete-img" class="btn btn-danger btn-delete mt-2" data-imgid="@Model.ImgId">
                 Delete
             </button>
